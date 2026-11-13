@@ -4,7 +4,7 @@
 
 ## Текущий этап
 
-**Завершены исследование данных, EDA, подготовка split, classical baseline, подбор признаков, эксплуатационные замеры и однократная финальная оценка.** Зафиксирован Linear SVM с word + char_wb TF-IDF; official test оценён один раз и больше не используется для настройки. Подробности — в `reports/research.md`, `configs/final_model.json` и `experiments/`.
+**Завершены исследование данных, EDA, подготовка split, сравнение и финальная оценка модели; добавлен код локального HTTP API для классификации.** Зафиксирован Linear SVM с word + char_wb TF-IDF; official test оценён один раз и больше не используется для настройки. Проверка запуска API остаётся следующим шагом. Подробности — в `reports/research.md`, `configs/final_model.json` и `experiments/`.
 
 ## Воспроизведение
 
@@ -20,6 +20,18 @@ python src/models/baseline.py
 
 MLflow Tracking сохраняет метаданные запусков в локальную SQLite `mlflow.db`, а артефакты — в `mlruns/` (оба пути исключены из Git). Для UI выполните `mlflow server --backend-store-uri sqlite:///mlflow.db`.
 
+## HTTP API классификации
+
+Сначала выполните `notebooks/01_model_training_and_metrics.ipynb` сверху вниз, чтобы обучить и сохранить модель. Финальная ячейка покажет сохранённую оценку official test и не запустит предсказания повторно. Затем установите зависимости командой `python -m pip install -r requirements.txt` и запустите из корня проекта:
+
+```powershell
+python -m uvicorn src.api.main:app --reload
+```
+
+Интерактивная схема запросов доступна на `http://127.0.0.1:8000/docs`. Для классификации отправьте `POST /v1/classify` с JSON `{"text":"I lost my card"}`. Ответ содержит `intent`, `request_id` и `model_version`. `GET /health/live` проверяет процесс, `GET /health/ready` — доступность модели. Невалидный текст отклоняется с кодом 422; если model artifact не создан или не читается, readiness и классификация возвращают 503.
+
+API не возвращает confidence: используемый Linear SVM не откалиброван в вероятности. Текст запроса не включается в сообщения журнала приложения.
+
 ## Интерактивное обучение в PyCharm
 
 Установите зависимости из корня проекта командой `python -m pip install -r requirements.txt`. Откройте `notebooks/01_model_training_and_metrics.ipynb` как Jupyter Notebook и выберите тот же Python-интерпретатор. Запускайте ячейки сверху вниз: ноутбук проверит данные и покажет EDA-графики, подготовит split из `data/raw/`, обучит baseline-модели, сравнит настройки Linear SVM и word/char представления, покажет метрики и ошибки, замерит latency, а в последней ячейке покажет сохранённый результат official test без повторного вызова модели. Сводки сохраняются в `experiments/`, параметры — в `configs/final_model.json`, прогоны — в MLflow.
@@ -30,6 +42,7 @@ MLflow Tracking сохраняет метаданные запусков в ло
 - `data/processed/` — воспроизводимые train/validation CSV (игнорируются Git).
 - `src/data/` — загрузка, аудит и подготовка split.
 - `src/models/` — baseline и дальнейшие модели.
+- `src/api/` — HTTP API для intent classification.
 - `configs/` — параметры split, baseline и зафиксированного кандидата.
 - `experiments/baseline/` — конфигурация, метрики и диагностика ошибок.
 - `reports/` — исследование и объяснение результатов.

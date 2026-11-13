@@ -198,8 +198,14 @@ for title,subs in sections:
             ('Оценить official test один раз','Accuracy, Macro/Weighted Precision, Recall и F1','Выполнено, без повторной настройки'),
             ('Сохранить решение','Модель, параметры, метрики, ограничения','Кандидат готов к реализации сервиса')])
     elif title.startswith('10.'):
-        doc.add_paragraph('После выбора модели оформляем inference как отдельный сервис. FastAPI принимает текст запроса, проверяет схему и длину, загружает версионированный pipeline и возвращает intent. Ошибки входных данных и непредвиденные ошибки сервиса журналируются отдельно; сырой пользовательский текст нельзя без нужды хранить в логах.')
-        doc.add_paragraph('RAG не строится на одних метках BANKING77: нужны проверенные статьи поддержки с источниками, владельцем и датой актуальности. Retrieval возвращает выдержки, генератор отвечает на их основе и указывает источники. Если доказательств недостаточно, система должна воздержаться от уверенного ответа и передать запрос оператору.')
+        doc.add_paragraph('Классификационный HTTP API реализован в src/api/main.py на FastAPI. Приложение загружает joblib pipeline один раз в lifespan и повторно использует его между запросами. Путь задаётся configs/final_model.json; переменная INTENT_MODEL_PATH позволяет переопределить локальный путь к артефакту. /health/live проверяет процесс, /health/ready отдельно сообщает, доступна ли модель.')
+        doc.add_paragraph('POST /v1/classify принимает JSON с текстом от 1 до 2 000 символов, удаляет крайние пробелы и запрещает неизвестные поля. FastAPI/Pydantic возвращает 422 для некорректного запроса. Успешный ответ содержит intent, request_id и model_version. Confidence не возвращаем: Linear SVM выдаёт неоткалиброванные decision scores, которые нельзя выдавать за вероятности. Сырой текст обращения не записывается в сообщения журнала приложения.')
+        add_table(doc,['Маршрут','Назначение','Поведение при ошибке'],[
+            ('GET /health/live','Проверить, что процесс API запущен','Не требует загруженной модели'),
+            ('GET /health/ready','Проверить готовность модели','503, если артефакт отсутствует или не загрузился'),
+            ('POST /v1/classify','Вернуть intent для одного текста','422 для некорректного тела; 503 без модели; 500 при ошибке предсказания')])
+        doc.add_paragraph('Пример тела запроса: {"text":"I lost my card"}. Ответ содержит текстовую метку intent, случайный request_id для связи с журналами и версию модели. Swagger/OpenAPI доступен через /docs. Сейчас это локальный учебный API: аутентификация, rate limiting, TLS termination, метрики сервера и мониторинг качества не добавлены; перед внешним размещением эти компоненты нужно спроектировать отдельно.')
+        doc.add_paragraph('RAG не строится на одних метках BANKING77: для него нужны проверенные статьи поддержки с источниками, владельцем и датой актуальности. Retrieval должен возвращать релевантные выдержки, а генератор — отвечать с указанием источников и передавать запрос оператору, если доказательств недостаточно. Корпус статей пока не подключён.')
         add_table(doc,['Слой','Ответственность','Проверка'],[
             ('API','Валидация входа и единый формат ответа','Контракты и коды ошибок'),
             ('Intent model','Классификация запроса','Версия, метрики и fallback'),
@@ -239,7 +245,8 @@ add_table(doc,['Порядок','Работа','Результат','Артеф�
     ('6','Сравнение word и char признаков','Проверено 7 конфигураций; word + char_wb достиг Macro F1=0.8987','word_char_comparison.csv, character_tuning_reports/'),
     ('7','Фиксация кандидата и замеры','Word + char_wb Linear SVM: Macro F1=0.8987; P50/P95=1.21/2.20 мс; joblib=20.36 MiB','configs/final_model.json, experiments/final_model/operational_metrics.json'),
     ('8','Финальная оценка','Official test: 3 080 запросов; Accuracy=0.9010, Macro F1=0.9011; тест не использовался для настройки','experiments/final_model/test_metrics.json, classification_report.csv, confusion_matrix.csv'),
-    ('9','Сервис, retrieval и эксплуатация','Предстоит определить проверенные статьи поддержки, API, мониторинг и fallback','Следующая разработка после фиксации классификатора')])
+    ('9','HTTP API классификации','Добавлены predict endpoint, валидация, health/readiness и версия модели; HTTP запуск предстоит проверить','src/api/main.py, README.md'),
+    ('10','Retrieval и RAG','Нужны одобренные статьи поддержки и их владельцы; затем спроектировать индексацию, поиск, источники и отказ при нехватке контекста','Начать после получения проверенного корпуса')])
 
 doc.add_heading('Источники данных и публикации',level=1)
 for source in [
@@ -250,7 +257,10 @@ for source in [
 'MASSIVE: https://huggingface.co/datasets/AmazonScience/massive',
 'Bitext Customer Support: https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset',
 'MLflow Tracking API: https://mlflow.org/docs/latest/tracking/tracking-api/',
-'MLflow SQLite backend: https://mlflow.org/docs/latest/tracking/backend-stores/']:
+'MLflow SQLite backend: https://mlflow.org/docs/latest/tracking/backend-stores/',
+'FastAPI request body: https://fastapi.tiangolo.com/tutorial/body/',
+'FastAPI response model: https://fastapi.tiangolo.com/tutorial/response-model/',
+'FastAPI lifespan: https://fastapi.tiangolo.com/advanced/events/']:
     doc.add_paragraph(source,style='List Bullet')
 footer=sec.footer.paragraphs[0]; footer.alignment=WD_ALIGN_PARAGRAPH.RIGHT; footer.add_run('Учебный ML/NLP проект  •  '); field(footer,'PAGE')
 OUT.parent.mkdir(parents=True,exist_ok=True); TEMP_OUT.parent.mkdir(parents=True,exist_ok=True); doc.save(TEMP_OUT)
