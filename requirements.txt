@@ -1,3 +1,7 @@
+# Model evaluation
 pandas>=2.0
 Pillow>=10.0
 python-docx>=1.1
+scikit-learn>=1.5,<2
+mlflow>=3,<4
+matplotlib>=3.8,<4

@@ -1,0 +1,12 @@
+{
+  "name": "banking77-classical-baseline-v1",
+  "split_manifest": "experiments/baseline/split_manifest.json",
+  "tracking": {"backend": "sqlite", "database": "mlflow.db", "experiment": "banking77-classical-baselines"},
+  "metrics": ["accuracy", "macro_precision", "macro_recall", "macro_f1", "weighted_precision", "weighted_recall", "weighted_f1", "per_class_precision_recall_f1"],
+  "timing": {"warmup_requests": 16, "full_validation_repeats": 5, "single_request_sample_size": 200, "single_request_repeats": 5},
+  "majority": {"strategy": "most_frequent"},
+  "tfidf": {"ngram_range": [1, 2], "min_df": 1, "sublinear_tf": true, "lowercase": true, "stop_words": null, "token_pattern": "(?u)\\b\\w\\w+\\b"},
+  "logistic_regression": {"C": 1.0, "max_iter": 2000, "class_weight": null, "random_state": 42},
+  "linear_svm": {"C": 1.0, "class_weight": null, "random_state": 42},
+  "naive_bayes": {"alpha": 1.0}
+}

@@ -1,5 +1,7 @@
 from pathlib import Path
 import shutil
+import csv
+import json
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -7,9 +9,11 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'outputs' / 'study_guide.docx'
+OUT = ROOT / 'outputs' / 'study_guide_stage3.docx'
 TEMP_OUT = ROOT / 'work' / 'study_guide_generated.docx'
 FIG = ROOT / 'reports' / 'figures'
+BASELINE = ROOT / 'experiments' / 'baseline'
+RESULTS = json.loads((BASELINE / 'results.json').read_text(encoding='utf-8'))
 
 def field(paragraph, instr):
     r=paragraph.add_run(); b=OxmlElement('w:fldChar'); b.set(qn('w:fldCharType'),'begin'); r._r.append(b)
@@ -47,14 +51,14 @@ for name,size,color in [('Title',25,'153B5B'),('Heading 1',17,'153B5B'),('Headin
 p=doc.add_paragraph(style='Title'); p.add_run('Исследование и разработка интеллектуальной системы обработки пользовательских обращений с применением ML, NLP и Generative AI')
 p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(10); r=p.add_run('Учебное пособие и журнал экспериментов'); r.bold=True; r.font.size=Pt(13); r.font.color.rgb=RGBColor.from_string('167D8D')
 doc.add_paragraph('Проект развивается по этапам: сначала проверяем данные и формулируем задачу, затем обучаем и сравниваем модели, после этого проектируем поиск, генерацию и API. Документ объясняет решения и пополняется реальными результатами по мере работы.')
-p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(14); p.add_run('Завершены этапы 1–2: исследование и первичный EDA').bold=True
+p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(14); p.add_run('Завершены этапы 1–3: исследование, EDA и классические baseline').bold=True
 doc.add_paragraph('Дата обновления: 13 ноября 2026')
 doc.add_page_break()
 
 doc.add_heading('Оглавление', level=1); p=doc.add_paragraph(); field(p,'TOC \\o "1-2" \\h \\z \\u')
 doc.add_paragraph('В Word выберите оглавление и обновите поле, если номера страниц не обновились автоматически.')
 doc.add_heading('Как читать это пособие', level=1)
-doc.add_paragraph('Каждый этап объясняет задачу и варианты решения, фиксирует выбранный подход и его причины, затем показывает реализацию, фактические результаты и следующие эксперименты. Результаты моделей пока не получены; в документе их нет.')
+doc.add_paragraph('Каждый этап объясняет задачу и варианты решения, фиксирует выбранный подход и его причины, затем показывает реализацию, фактические результаты и следующие эксперименты. Все приведённые метрики получены на validation; официальный test пока не использовался для сравнения моделей.')
 
 sections=[
 ('1. Постановка задачи',['Бизнес-проблема и цель','Формализация intent classification','Входы, выходы и критерии успеха']),
@@ -73,7 +77,7 @@ sections=[
 for title,subs in sections:
     doc.add_heading(title,level=1)
     if title.startswith('1.'):
-        doc.add_paragraph('Первая ML-задача — определить по тексту запроса одну из 77 меток намерения BANKING77. Это не то же самое, что оценка срочности. Основной критерий сравнения планируется выбрать Macro F1 на validation; официальный test останется для финальной оценки.')
+        doc.add_paragraph('Первая ML-задача — определить по тексту запроса одну из 77 меток намерения BANKING77. Это не то же самое, что оценка срочности. Основной критерий сравнения — Macro F1 на validation; официальный test останется для финальной оценки.')
     elif title.startswith('2.'):
         doc.add_paragraph('Для первого benchmark выбран BANKING77: 13 083 английских запроса по 77 банковским намерениям. Он подходит для сравнения классификаторов, но не содержит меток приоритета, статей базы знаний, истории диалогов или эталонных ответов.')
     elif title.startswith('3.'):
@@ -91,11 +95,53 @@ for title,subs in sections:
             ('Повторы после casefold и схлопывания пробелов','8 строк / 4 ключа','2 строки / 1 ключ'),
             ('Совпадения между split после нормализации','7 ключей (7 строк)','7 ключей (7 строк)'),
             ('Конфликты меток у совпадений','0','0')])
-        doc.add_paragraph('Нормализация использовалась только для аудита, исходные тексты не менялись. Перед разбиением на validation оставим официальный test неизменным, удалим train-дубликаты по этому ключу и зафиксируем этот шаг до обучения. Проверка семантически близких, но не идентичных запросов — отдельная задача.')
+        doc.add_paragraph('Нормализация использовалась только для аудита, исходные тексты не менялись. При подготовке split из train удалили 4 внутренних повтора и 7 строк, совпавших с official test по ключу. Test оставлен без изменений. Проверка семантически близких, но не идентичных запросов — отдельная задача.')
+    elif title.startswith('4.'):
+        doc.add_paragraph('После дедупликации осталось 9 992 строки. Стратифицированное разбиение с random_state=42 и долей validation 20% дало 7 993 train и 1 999 validation. В каждом классе есть 28–149 train-примеров и 7–38 validation-примеров.')
+        doc.add_paragraph('Стратификация сохраняет примеры всех намерений в обеих частях. Vectorizer обучается внутри sklearn Pipeline только на train; validation участвует лишь в сравнении моделей. Официальный test использовался только по тексту для аудита дубликатов, но его метки и оценки не использовались.')
+        add_table(doc,['Данные','Строки','Роль'],[
+            ('Train после дедупликации','9 992','Источник stratified split'),
+            ('Train fit','7 993','Fit TF-IDF и классификатора'),
+            ('Validation','1 999','Сравнение моделей и эксперименты'),
+            ('Official test','3 080','Оставлен для финальной оценки')])
+    elif title.startswith('5.'):
+        doc.add_paragraph('Сначала сравнили Majority, TF-IDF + Logistic Regression, TF-IDF + Linear SVM и TF-IDF + Multinomial Naive Bayes. У TF-IDF одинаковые word n-граммы 1–2, lowercase=true, min_df=1, sublinear_tf=true, без stop-word фильтра; class_weight не включён. Векторизатор обучается только на train.')
+        ordered=RESULTS['models']
+        quality_rows=[(r['model'],f"{r['accuracy']*100:.2f}%",f"{r['macro_precision']:.4f}",f"{r['macro_recall']:.4f}",f"{r['macro_f1']:.4f}") for r in ordered]
+        add_table(doc,['Модель','Accuracy','Macro P','Macro R','Macro F1'],quality_rows)
+        weighted_rows=[(r['model'],f"{r['weighted_precision']:.4f}",f"{r['weighted_recall']:.4f}",f"{r['weighted_f1']:.4f}") for r in ordered]
+        add_table(doc,['Модель','Weighted P','Weighted R','Weighted F1'],weighted_rows)
+        performance_rows=[(r['model'],f"{r['fit_seconds']:.2f}",f"{r['single_query_latency_p50_ms']:.2f} / {r['single_query_latency_p95_ms']:.2f}",f"{r['serialized_model_kb']/1024:.2f} MB") for r in ordered]
+        add_table(doc,['Модель','Fit, сек','Одиночный запрос P50 / P95, мс','Размер joblib'],performance_rows)
+        doc.add_paragraph('Linear SVM лидирует на этой validation с Macro F1 0.8795. Это сильный classical baseline, но не финальный выбор: гиперпараметры пока не подбирались, class weights не проверялись, Transformer ещё не сравнивался.')
+        doc.add_heading('Как работают baseline-модели',level=2)
+        doc.add_paragraph('Majority задаёт нижнюю контрольную планку. Logistic Regression обучает линейный multiclass классификатор с log-loss. Linear SVM разделяет классы с большим зазором и использует squared hinge loss. Multinomial Naive Bayes оценивает классы через условные частоты слов с alpha-сглаживанием. TF-IDF уменьшает вес частых слов и повышает вес информативных для документа терминов.')
+        doc.add_heading('Следующее сравнение',level=2)
+        doc.add_paragraph('DistilBERT/BERT и zero-shot/few-shot prompting остаются следующими кандидатами. Их сравним после анализа ошибок и с учётом задержки, размера, памяти и стоимости.')
+    elif title.startswith('6.'):
+        doc.add_paragraph('Параметры зафиксированы в configs/baseline.json. Logistic Regression: C=1, max_iter=2000. Linear SVM: C=1 и squared hinge по умолчанию. MultinomialNB: alpha=1. Используется собственная функция потерь или правдоподобия каждого алгоритма; общей функции потерь у этих baseline нет.')
+        doc.add_paragraph('Повторяемость обеспечивают фиксированный split seed=42, источник с SHA-256, конфигурация и версии библиотек. MLflow записывает параметры, validation-метрики, per-class отчёты, матрицы ошибок и сериализованные pipeline. Метаданные хранятся в локальной SQLite, артефакты — в mlruns/; оба пути исключены из Git.')
+    elif title.startswith('7.'):
+        best=RESULTS['models'][0]
+        doc.add_paragraph(f"На validation из {RESULTS['validation_rows']} обращений Linear SVM получил Accuracy {best['accuracy']:.4f}, Macro F1 {best['macro_f1']:.4f} и Weighted F1 {best['weighted_f1']:.4f}. Macro F1 — простое среднее F1 по 77 классам; Weighted F1 взвешивает классы по support. Эти средние близки, но метрики не взаимозаменяемы.")
+        doc.add_paragraph('Формулы: Accuracy = число верных предсказаний / N; Precision = TP / (TP + FP); Recall = TP / (TP + FN); F1 = 2 × Precision × Recall / (Precision + Recall). Для multiclass Macro F1 = среднее F1 по K классам; Weighted F1 = сумма (support класса × F1 класса) / N. Аналогично строятся macro и weighted Precision/Recall.')
+        doc.add_paragraph('Accuracy — доля верных ответов. Precision отвечает, насколько точны предсказания класса; Recall — какую долю реальных примеров класса нашли. Macro усредняет классы поровну, Weighted учитывает support. Поэтому Macro важен при разном числе примеров, а Weighted отражает среднее по этому split. Общая Accuracy не показывает источник ошибок, поэтому дополнительно анализируем confusion matrix и метрики по классам.')
+        doc.add_paragraph('ROC-AUC сейчас не считаем: выбранная задача — многоклассовое назначение одного intent, а текущий LinearSVC возвращает margin scores, не откалиброванные вероятности. При необходимости можно отдельно исследовать one-vs-rest ROC-AUC как ranking metric.')
+        add_figure(doc,BASELINE/'tfidf_linear_svm_confusion_matrix.png','Рисунок 3. Confusion matrix Linear SVM на validation. Диагональ — верные предсказания; off-diagonal клетки — ошибки. Порядок классов и названия — в CSV матрице.',5.8)
+        with (BASELINE/'top_confusions.csv').open(encoding='utf-8') as f:
+            confusions=list(csv.DictReader(f))[:5]
+        add_table(doc,['Истинный класс','Предсказан','Ошибок'],[(r['true_category'],r['predicted_category'],r['count']) for r in confusions])
+        with (BASELINE/'tfidf_linear_svm_classification_report.csv').open(encoding='utf-8') as f:
+            report=list(csv.DictReader(f))
+        classes=[r for r in report if r.get('label') not in {'accuracy','macro avg','weighted avg'}]
+        classes.sort(key=lambda r:float(r['f1-score']))
+        add_table(doc,['Класс с наименьшим F1','Support','F1'],[(r['label'],r['support'],f"{float(r['f1-score']):.3f}") for r in classes[:5]])
+        doc.add_paragraph('Самый трудный класс в этом прогоне — pending_transfer (F1=0.704, 30 validation-примеров). Частые путаницы: top_up_failed → pending_top_up и disposable_card_limits → get_disposable_virtual_card. Решение пока одно на запрос; вероятности не калибровались.')
+        doc.add_paragraph('Время fit и одиночного predict измерено локально, без HTTP overhead. Размер joblib — размер сериализованного pipeline, а не RAM. Пиковую память в этом прогоне не измеряли.')
     else:
         doc.add_paragraph('Раздел будет заполнен на соответствующем этапе по фактическим данным и результатам экспериментов. Численные результаты до запуска эксперимента не подставляются.')
     for sub in subs:
-        if title.startswith('3.'):
+        if title.startswith(('3.','4.','5.','6.','7.')):
             continue
         doc.add_heading(sub,level=2)
         doc.add_paragraph('Понятия, варианты подхода, обоснование выбора, реализация и результаты будут добавлены на соответствующем этапе.')
@@ -107,7 +153,9 @@ for source in [
 'Исходные CSV и лицензия CC BY 4.0: https://github.com/PolyAI-LDN/task-specific-datasets',
 'CLINC OOS: https://aclanthology.org/D19-1131/',
 'MASSIVE: https://huggingface.co/datasets/AmazonScience/massive',
-'Bitext Customer Support: https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset']:
+'Bitext Customer Support: https://huggingface.co/datasets/bitext/Bitext-customer-support-llm-chatbot-training-dataset',
+'MLflow Tracking API: https://mlflow.org/docs/latest/tracking/tracking-api/',
+'MLflow SQLite backend: https://mlflow.org/docs/latest/tracking/backend-stores/']:
     doc.add_paragraph(source,style='List Bullet')
 footer=sec.footer.paragraphs[0]; footer.alignment=WD_ALIGN_PARAGRAPH.RIGHT; footer.add_run('Учебный ML/NLP проект  •  '); field(footer,'PAGE')
 OUT.parent.mkdir(parents=True,exist_ok=True); TEMP_OUT.parent.mkdir(parents=True,exist_ok=True); doc.save(TEMP_OUT)

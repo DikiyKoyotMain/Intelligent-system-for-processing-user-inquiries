@@ -1,0 +1,8 @@
+{
+  "name": "banking77-split-v1",
+  "validation_fraction": 0.2,
+  "random_state": 42,
+  "stratify_by": "category",
+  "duplicate_audit_key": "casefold text and collapse consecutive whitespace",
+  "duplicate_policy": "keep first normalized text within source train, then remove source train texts matching source test normalized keys; official test remains byte-identical and is not used for fitting or model selection"
+}
