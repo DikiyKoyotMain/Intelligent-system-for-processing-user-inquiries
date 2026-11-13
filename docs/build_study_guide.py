@@ -51,7 +51,7 @@ for name,size,color in [('Title',25,'153B5B'),('Heading 1',17,'153B5B'),('Headin
 p=doc.add_paragraph(style='Title'); p.add_run('Исследование и разработка интеллектуальной системы обработки пользовательских обращений с применением ML, NLP и Generative AI')
 p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(10); r=p.add_run('Учебное пособие и журнал экспериментов'); r.bold=True; r.font.size=Pt(13); r.font.color.rgb=RGBColor.from_string('167D8D')
 doc.add_paragraph('Проект развивается по этапам: сначала проверяем данные и формулируем задачу, затем обучаем и сравниваем модели, после этого проектируем поиск, генерацию и API. Документ объясняет решения и пополняется реальными результатами по мере работы.')
-p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(14); p.add_run('Завершены EDA, подготовка данных, сравнение классических моделей и подбор параметров Linear SVM').bold=True
+p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(14); p.add_run('Завершены EDA, подготовка данных, классические baseline, подбор параметров и сравнение word / char TF-IDF').bold=True
 doc.add_paragraph('Дата обновления: 13 ноября 2026')
 doc.add_page_break()
 
@@ -148,14 +148,66 @@ for title,subs in sections:
         add_table(doc,['Word n-граммы','C','Веса классов','Accuracy','Macro F1'],top_rows)
         best=tuning[0]
         doc.add_paragraph(f"Лучший вариант — n-граммы {best['tfidf_ngram_range']}, C={best['C']}, без весов классов: Macro F1 {float(best['macro_f1']):.4f}, Accuracy {float(best['accuracy']):.4f}. Он совпал с исходной конфигурацией. C=2 дал Macro F1 0.8793; word триграммы снизили максимум до 0.8653. Ни одна из 18 настроек не улучшила baseline.")
-        doc.add_paragraph('Вывод: оставляем TF-IDF с word n-граммами 1–2, C=1 и class_weight=None как сильный классический baseline. Следом сравним отдельное текстовое представление или Transformer; official test откроем только после фиксации модели и параметров.')
+        comparison_path=BASELINE/'word_char_comparison.csv'
+        with comparison_path.open(encoding='utf-8') as f:
+            comparison=list(csv.DictReader(f))
+        doc.add_heading('Сравнение словесных и символьных признаков',level=2)
+        comparison_rows=[(r['feature_representation'],r['C'],f"{float(r['accuracy']):.4f}",f"{float(r['macro_f1']):.4f}",f"{float(r['fit_seconds']):.2f}") for r in comparison]
+        add_table(doc,['Представление','C','Accuracy','Macro F1','Fit, сек'],comparison_rows)
+        candidate=comparison[0]
+        baseline=next(r for r in comparison if r['model']=='tfidf_linear_svm')
+        delta=float(candidate['macro_f1'])-float(baseline['macro_f1'])
+        doc.add_paragraph(f"Word TF-IDF (1–2) вместе с символьными char_wb n-граммами (3–5), C={candidate['C']}, дал Macro F1 {float(candidate['macro_f1']):.4f}. Прирост относительно word baseline составил {delta:.4f}. Fit занял {float(candidate['fit_seconds']):.2f} сек вместо {float(baseline['fit_seconds']):.2f} сек; inference latency и память ещё нужно измерить.")
+        doc.add_paragraph('Текущий кандидат — объединение word и char_wb признаков. Official test не использовался. Перед финальной оценкой фиксируем конфигурацию, измеряем размер и задержку модели, затем один раз считаем метрики на official test.')
+    elif title.startswith('9.'):
+        doc.add_paragraph('Финальный выбор делаем после сравнения качества, inference latency, размера сериализованной модели и ограничений проекта. Validation уже использовалась для выбора признаков, поэтому дальнейшее число попыток на ней ограничиваем. После фиксации конфигурации official test используется один раз для независимой оценки.')
+        add_table(doc,['Действие','Проверка','Результат'],[
+            ('Зафиксировать кандидата','word + char_wb TF-IDF, Linear SVM, C=2','Конфигурация без дальнейшего подбора на test'),
+            ('Повторить эксплуатационные замеры','Fit, predict latency P50/P95, размер joblib, память','Сравнение качества и ресурсов'),
+            ('Оценить official test один раз','Accuracy, Macro/Weighted Precision, Recall и F1','Финальная оценка обобщения'),
+            ('Сохранить решение','Модель, параметры, метрики, ограничения','Воспроизводимый выбор')])
+    elif title.startswith('10.'):
+        doc.add_paragraph('После выбора модели оформляем inference как отдельный сервис. FastAPI принимает текст запроса, проверяет схему и длину, загружает версионированный pipeline и возвращает intent. Ошибки входных данных и непредвиденные ошибки сервиса журналируются отдельно; сырой пользовательский текст нельзя без нужды хранить в логах.')
+        doc.add_paragraph('RAG не строится на одних метках BANKING77: нужны проверенные статьи поддержки с источниками, владельцем и датой актуальности. Retrieval возвращает выдержки, генератор отвечает на их основе и указывает источники. Если доказательств недостаточно, система должна воздержаться от уверенного ответа и передать запрос оператору.')
+        add_table(doc,['Слой','Ответственность','Проверка'],[
+            ('API','Валидация входа и единый формат ответа','Контракты и коды ошибок'),
+            ('Intent model','Классификация запроса','Версия, метрики и fallback'),
+            ('Retrieval','Поиск по одобренным статьям','Релевантность и актуальность'),
+            ('Generation','Сборка ответа с источниками','Grounding и отказ при нехватке данных'),
+            ('Operations','Логи, метрики, версия модели','Задержка, ошибки и дрейф')])
+    elif title.startswith('11.'):
+        doc.add_paragraph('Вопросы для самостоятельного разбора: почему Macro F1 лучше показывает качество редких intents; как TF-IDF строит признаки; зачем векторизатор находится внутри Pipeline; чем word и char n-граммы различаются; почему official test нельзя использовать для подбора; как измерять задержку и размер модели.')
+        doc.add_paragraph('Ответы проверяем по ходу реализации: Macro F1 усредняет F1 классов поровну; Pipeline предотвращает утечку словаря из validation; test даёт только финальную независимую оценку; latency замеряем на тех же запросах и сохраняем вместе с версиями библиотек и конфигурацией.')
+    elif title.startswith('12.'):
+        add_table(doc,['Термин','Объяснение'],[
+            ('Intent classification','Предсказание намерения по тексту запроса.'),
+            ('Train / validation / test','Обучение / выбор модели / финальная независимая оценка.'),
+            ('Data leakage','Попадание информации из оценки в обучение или выбор конфигурации.'),
+            ('TF-IDF','Взвешивание слов или символьных фрагментов по частоте в документе и корпусе.'),
+            ('N-грамма','Последовательность из N соседних слов или символов.'),
+            ('Linear SVM','Линейный классификатор с максимальным разделяющим зазором.'),
+            ('Macro F1','Среднее F1 по классам с одинаковым весом.'),
+            ('MLflow','Локальный учёт параметров, метрик и артефактов эксперимента.'),
+            ('RAG','Поиск источников и генерация ответа, опирающаяся на найденные документы.')])
     else:
         doc.add_paragraph('Раздел будет заполнен на соответствующем этапе по фактическим данным и результатам экспериментов. Численные результаты до запуска эксперимента не подставляются.')
     for sub in subs:
-        if title.startswith(('3.','4.','5.','6.','7.','8.')):
+        if title.startswith(('3.','4.','5.','6.','7.','8.','9.','10.','11.','12.')):
             continue
         doc.add_heading(sub,level=2)
         doc.add_paragraph('Понятия, варианты подхода, обоснование выбора, реализация и результаты будут добавлены на соответствующем этапе.')
+
+doc.add_heading('Журнал разработки',level=1)
+doc.add_paragraph('Ниже зафиксирована последовательность выполненных работ и следующий согласованный шаг. Численные итоги соответствуют фактическим validation экспериментам; результаты official test будут добавлены только после фиксации финального кандидата.')
+add_table(doc,['Порядок','Работа','Результат','Артефакты'],[
+    ('1','Постановка задачи и поиск открытых данных','Выбрана 77-классовая intent classification задача BANKING77; зафиксированы лицензия и ограничения','reports/research.md'),
+    ('2','EDA источника','10 003 train и 3 080 test; проверены схема, пропуски, классы, длина текста, повторы и пересечения','reports/eda_summary.json, reports/figures/'),
+    ('3','Очистка и разбиение','Удалены 4 внутренних повтора и 7 совпадений с official test; получено 7 993 train и 1 999 validation','configs/split.json, split_manifest.json'),
+    ('4','Классические baseline','Сравнены Majority, Logistic Regression, Linear SVM и Naive Bayes; лучший baseline Macro F1=0.8795','experiments/baseline/results.csv'),
+    ('5','Подбор параметров Linear SVM','Проверено 18 комбинаций word n-грамм, C и class weights; прироста не найдено','linear_svm_tuning_results.csv'),
+    ('6','Сравнение word и char признаков','Проверено 7 конфигураций; word + char_wb достиг Macro F1=0.8987','word_char_comparison.csv, character_tuning_reports/'),
+    ('7','Финальная оценка','Предстоит зафиксировать candidate и один раз оценить на official test','Параметры и результаты будут добавлены после выполнения'),
+    ('8','Сервис, retrieval и эксплуатация','Предстоит определить доступные статьи поддержки, API, мониторинг и fallback','Реализация начнётся после проверки финальной модели')])
 
 doc.add_heading('Источники данных и публикации',level=1)
 for source in [

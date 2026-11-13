@@ -4,7 +4,7 @@
 
 ## Текущий этап
 
-**Завершены исследование данных, EDA, подготовка split, classical baseline и сравнение 18 настроек Linear SVM.** Исходная конфигурация осталась лучшей. Подробности — в `reports/research.md` и `experiments/baseline/`.
+**Завершены исследование данных, EDA, подготовка split, classical baseline, подбор настроек Linear SVM и сравнение словесных с символьными n-граммами.** Лучший кандидат — объединение word и char_wb TF-IDF с Linear SVM. Подробности — в `reports/research.md` и `experiments/baseline/`.
 
 ## Воспроизведение
 
@@ -22,7 +22,7 @@ MLflow Tracking сохраняет метаданные запусков в ло
 
 ## Интерактивное обучение в PyCharm
 
-Установите зависимости из корня проекта командой `python -m pip install -r requirements.txt`. Откройте `notebooks/01_model_training_and_metrics.ipynb` как Jupyter Notebook и выберите тот же Python-интерпретатор. Запускайте ячейки сверху вниз: ноутбук проверит данные и покажет EDA-графики, подготовит split из `data/raw/`, обучит baseline-модели, сравнит 18 конфигураций Linear SVM, покажет метрики и ошибки, сохранит результаты в `experiments/baseline/` и залогирует прогоны в MLflow. Чтобы использовать готовый split без исходных CSV, оставьте существующие файлы в `data/processed/`.
+Установите зависимости из корня проекта командой `python -m pip install -r requirements.txt`. Откройте `notebooks/01_model_training_and_metrics.ipynb` как Jupyter Notebook и выберите тот же Python-интерпретатор. Запускайте ячейки сверху вниз: ноутбук проверит данные и покажет EDA-графики, подготовит split из `data/raw/`, обучит baseline-модели, сравнит настройки Linear SVM и word/char представления, покажет метрики и ошибки, сохранит результаты в `experiments/baseline/` и залогирует прогоны в MLflow. Чтобы использовать готовый split без исходных CSV, оставьте существующие файлы в `data/processed/`.
 
 ## Структура
 
