@@ -22,7 +22,7 @@ MLflow Tracking сохраняет метаданные запусков в ло
 
 ## Интерактивное обучение в PyCharm
 
-Установите зависимости из корня проекта командой `python -m pip install -r requirements.txt`. Откройте `notebooks/01_model_training_and_metrics.ipynb` как Jupyter Notebook и выберите тот же Python-интерпретатор. Запускайте ячейки сверху вниз: ноутбук подготовит split из `data/raw/`, обучит модели, покажет таблицу метрик и ошибки, сохранит результаты в `experiments/baseline/` и залогирует прогоны в MLflow. Чтобы использовать готовый split без исходных CSV, оставьте существующие файлы в `data/processed/`.
+Установите зависимости из корня проекта командой `python -m pip install -r requirements.txt`. Откройте `notebooks/01_model_training_and_metrics.ipynb` как Jupyter Notebook и выберите тот же Python-интерпретатор. Запускайте ячейки сверху вниз: ноутбук проверит данные и покажет EDA-графики, подготовит split из `data/raw/`, обучит модели, покажет таблицу метрик и ошибки, сохранит результаты в `experiments/baseline/` и залогирует прогоны в MLflow. Чтобы использовать готовый split без исходных CSV, оставьте существующие файлы в `data/processed/`.
 
 ## Структура
 
