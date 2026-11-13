@@ -9,7 +9,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'outputs' / 'study_guide_stage3.docx'
+OUT = ROOT / 'docs' / 'study_guide.docx'
 TEMP_OUT = ROOT / 'work' / 'study_guide_generated.docx'
 FIG = ROOT / 'reports' / 'figures'
 BASELINE = ROOT / 'experiments' / 'baseline'
@@ -51,7 +51,7 @@ for name,size,color in [('Title',25,'153B5B'),('Heading 1',17,'153B5B'),('Headin
 p=doc.add_paragraph(style='Title'); p.add_run('Исследование и разработка интеллектуальной системы обработки пользовательских обращений с применением ML, NLP и Generative AI')
 p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(10); r=p.add_run('Учебное пособие и журнал экспериментов'); r.bold=True; r.font.size=Pt(13); r.font.color.rgb=RGBColor.from_string('167D8D')
 doc.add_paragraph('Проект развивается по этапам: сначала проверяем данные и формулируем задачу, затем обучаем и сравниваем модели, после этого проектируем поиск, генерацию и API. Документ объясняет решения и пополняется реальными результатами по мере работы.')
-p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(14); p.add_run('Завершены этапы 1–3: исследование, EDA и классические baseline').bold=True
+p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(14); p.add_run('Завершены EDA, подготовка данных, сравнение классических моделей и подбор параметров Linear SVM').bold=True
 doc.add_paragraph('Дата обновления: 13 ноября 2026')
 doc.add_page_break()
 
@@ -113,11 +113,11 @@ for title,subs in sections:
         add_table(doc,['Модель','Weighted P','Weighted R','Weighted F1'],weighted_rows)
         performance_rows=[(r['model'],f"{r['fit_seconds']:.2f}",f"{r['single_query_latency_p50_ms']:.2f} / {r['single_query_latency_p95_ms']:.2f}",f"{r['serialized_model_kb']/1024:.2f} MB") for r in ordered]
         add_table(doc,['Модель','Fit, сек','Одиночный запрос P50 / P95, мс','Размер joblib'],performance_rows)
-        doc.add_paragraph('Linear SVM лидирует на этой validation с Macro F1 0.8795. Это сильный classical baseline, но не финальный выбор: гиперпараметры пока не подбирались, class weights не проверялись, Transformer ещё не сравнивался.')
+        doc.add_paragraph('Linear SVM лидирует на этой validation с Macro F1 0.8795. Подбор параметров и class weights описан в разделе улучшения модели; Transformer ещё не сравнивался.')
         doc.add_heading('Как работают baseline-модели',level=2)
         doc.add_paragraph('Majority задаёт нижнюю контрольную планку. Logistic Regression обучает линейный multiclass классификатор с log-loss. Linear SVM разделяет классы с большим зазором и использует squared hinge loss. Multinomial Naive Bayes оценивает классы через условные частоты слов с alpha-сглаживанием. TF-IDF уменьшает вес частых слов и повышает вес информативных для документа терминов.')
         doc.add_heading('Следующее сравнение',level=2)
-        doc.add_paragraph('DistilBERT/BERT и zero-shot/few-shot prompting остаются следующими кандидатами. Их сравним после анализа ошибок и с учётом задержки, размера, памяти и стоимости.')
+        doc.add_paragraph('Следующий эксперимент сравнит новые представления текста и Transformer на том же split. Official test откроем после фиксации выбора модели.')
     elif title.startswith('6.'):
         doc.add_paragraph('Параметры зафиксированы в configs/baseline.json. Logistic Regression: C=1, max_iter=2000. Linear SVM: C=1 и squared hinge по умолчанию. MultinomialNB: alpha=1. Используется собственная функция потерь или правдоподобия каждого алгоритма; общей функции потерь у этих baseline нет.')
         doc.add_paragraph('Повторяемость обеспечивают фиксированный split seed=42, источник с SHA-256, конфигурация и версии библиотек. MLflow записывает параметры, validation-метрики, per-class отчёты, матрицы ошибок и сериализованные pipeline. Метаданные хранятся в локальной SQLite, артефакты — в mlruns/; оба пути исключены из Git.')
@@ -138,10 +138,21 @@ for title,subs in sections:
         add_table(doc,['Класс с наименьшим F1','Support','F1'],[(r['label'],r['support'],f"{float(r['f1-score']):.3f}") for r in classes[:5]])
         doc.add_paragraph('Самый трудный класс в этом прогоне — pending_transfer (F1=0.704, 30 validation-примеров). Частые путаницы: top_up_failed → pending_top_up и disposable_card_limits → get_disposable_virtual_card. Решение пока одно на запрос; вероятности не калибровались.')
         doc.add_paragraph('Время fit и одиночного predict измерено локально, без HTTP overhead. Размер joblib — размер сериализованного pipeline, а не RAM. Пиковую память в этом прогоне не измеряли.')
+    elif title.startswith('8.'):
+        tuning_path=BASELINE/'linear_svm_tuning_results.csv'
+        with tuning_path.open(encoding='utf-8') as f:
+            tuning=list(csv.DictReader(f))
+        tuning.sort(key=lambda r:float(r['macro_f1']),reverse=True)
+        doc.add_paragraph('На одном и том же stratified split сравнили 18 вариантов Linear SVM: word n-граммы 1–1, 1–2 или 1–3; C=0.5, 1 или 2; class_weight=None или balanced. Macro F1 на validation использовали как основной критерий. Official test не участвовал в подборе.')
+        top_rows=[(r['tfidf_ngram_range'],r['C'],'Нет' if r['class_weight']=='none' else 'Balanced',f"{float(r['accuracy']):.4f}",f"{float(r['macro_f1']):.4f}") for r in tuning[:5]]
+        add_table(doc,['Word n-граммы','C','Веса классов','Accuracy','Macro F1'],top_rows)
+        best=tuning[0]
+        doc.add_paragraph(f"Лучший вариант — n-граммы {best['tfidf_ngram_range']}, C={best['C']}, без весов классов: Macro F1 {float(best['macro_f1']):.4f}, Accuracy {float(best['accuracy']):.4f}. Он совпал с исходной конфигурацией. C=2 дал Macro F1 0.8793; word триграммы снизили максимум до 0.8653. Ни одна из 18 настроек не улучшила baseline.")
+        doc.add_paragraph('Вывод: оставляем TF-IDF с word n-граммами 1–2, C=1 и class_weight=None как сильный классический baseline. Следом сравним отдельное текстовое представление или Transformer; official test откроем только после фиксации модели и параметров.')
     else:
         doc.add_paragraph('Раздел будет заполнен на соответствующем этапе по фактическим данным и результатам экспериментов. Численные результаты до запуска эксперимента не подставляются.')
     for sub in subs:
-        if title.startswith(('3.','4.','5.','6.','7.')):
+        if title.startswith(('3.','4.','5.','6.','7.','8.')):
             continue
         doc.add_heading(sub,level=2)
         doc.add_paragraph('Понятия, варианты подхода, обоснование выбора, реализация и результаты будут добавлены на соответствующем этапе.')
@@ -160,5 +171,4 @@ for source in [
 footer=sec.footer.paragraphs[0]; footer.alignment=WD_ALIGN_PARAGRAPH.RIGHT; footer.add_run('Учебный ML/NLP проект  •  '); field(footer,'PAGE')
 OUT.parent.mkdir(parents=True,exist_ok=True); TEMP_OUT.parent.mkdir(parents=True,exist_ok=True); doc.save(TEMP_OUT)
 shutil.copy2(TEMP_OUT, OUT)
-repo_copy=ROOT/'docs'/'study_guide.docx'; repo_copy.write_bytes(OUT.read_bytes())
 print(OUT)
