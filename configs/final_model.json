@@ -1,0 +1,42 @@
+{
+  "name": "banking77-word-char-tfidf-linear-svm",
+  "model_artifact": "work/final_models/banking77_word_char_tfidf_linear_svm.joblib",
+  "estimator": "sklearn.svm.LinearSVC",
+  "classifier": {
+    "C": 2.0,
+    "class_weight": null,
+    "random_state": 42
+  },
+  "features": {
+    "combiner": "sklearn.pipeline.FeatureUnion",
+    "word_tfidf": {
+      "analyzer": "word",
+      "ngram_range": [1, 2],
+      "min_df": 1,
+      "sublinear_tf": true,
+      "lowercase": true,
+      "stop_words": null,
+      "token_pattern": "(?u)\\b\\w\\w+\\b"
+    },
+    "char_wb_tfidf": {
+      "analyzer": "char_wb",
+      "ngram_range": [3, 5],
+      "min_df": 2,
+      "sublinear_tf": true,
+      "lowercase": true
+    }
+  },
+  "selection": {
+    "split": "validation",
+    "metric": "macro_f1",
+    "value": 0.898671401241978,
+    "comparison_csv": "experiments/baseline/word_char_comparison.csv",
+    "official_test_evaluated": false
+  },
+  "benchmark": {
+    "warmup_requests": 32,
+    "latency_sample_size": 200,
+    "latency_repeats": 10,
+    "batch_repeats": 5
+  }
+}

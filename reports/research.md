@@ -219,4 +219,12 @@ Official test не использовался для выбора парамет
 
 Выбираем combined word + char_wb с `C=2` как текущего кандидата на финальную оценку. `C=1` почти не уступил по Macro F1 (разница 0.0001) и обучился быстрее; перед выводом о скорости нужно повторить замеры несколько раз на одном компьютере. Отдельный char и char_wb тоже превзошли word baseline, но уступили объединённому представлению.
 
-Полная таблица сохранена в `experiments/baseline/word_char_comparison.csv`, отчёты по классам — в `experiments/baseline/character_tuning_reports/`. Наиболее частые ошибки лучшей combined-модели и матрица сохранены как `notebook_top_confusions.csv` и `notebook_best_model_confusion_matrix.png`. Official test пока не использован. Следующий шаг — зафиксировать параметры кандидата, измерить inference latency и размер модели, затем выполнить одну финальную оценку на official test.
+Полная таблица сохранена в `experiments/baseline/word_char_comparison.csv`, отчёты по классам — в `experiments/baseline/character_tuning_reports/`. Наиболее частые ошибки лучшей combined-модели и матрица сохранены как `notebook_top_confusions.csv` и `notebook_best_model_confusion_matrix.png`. Official test пока не использован.
+
+## Фиксация кандидата и эксплуатационные замеры
+
+Кандидат зафиксирован в `configs/final_model.json`: Linear SVM с `C=2`, word TF-IDF (1–2) и char_wb TF-IDF (3–5), `min_df=2` для char-вектора, без class weights. Выбор основан на Macro F1=0.8987 validation. Параметры более не меняются по official test.
+
+На текущем компьютере измерили одиночный `predict` на 200 validation-запросах в 10 повторениях после 32 прогревочных запросов. P50 составил 1.21 мс, P95 — 2.20 мс. Пять полных пакетных прогонов по 1 999 validation-запросам дали медиану 0.185 сек, около 10 791 запроса в секунду при пакетном вызове. Fit занял 3.86 сек в одном прогоне. Сериализованный pipeline занимает 20.36 MiB. Эти замеры зависят от оборудования и версий Python/scikit-learn; одиночная задержка не включает HTTP/API overhead, пиковую RAM не измеряли.
+
+Метрики замеров сохранены в `experiments/final_model/operational_metrics.json` и залогированы в MLflow. Official test остаётся неоценённым. Следующий шаг — провести его одну финальную оценку без последующей настройки по этим результатам.

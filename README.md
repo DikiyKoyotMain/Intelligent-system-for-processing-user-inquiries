@@ -4,7 +4,7 @@
 
 ## Текущий этап
 
-**Завершены исследование данных, EDA, подготовка split, classical baseline, подбор настроек Linear SVM и сравнение словесных с символьными n-граммами.** Лучший кандидат — объединение word и char_wb TF-IDF с Linear SVM. Подробности — в `reports/research.md` и `experiments/baseline/`.
+**Завершены исследование данных, EDA, подготовка split, classical baseline, подбор настроек Linear SVM, сравнение словесных с символьными n-граммами и эксплуатационные замеры кандидата.** Зафиксирован Linear SVM с word + char_wb TF-IDF; official test сохранён для следующей финальной оценки. Подробности — в `reports/research.md`, `configs/final_model.json` и `experiments/`.
 
 ## Воспроизведение
 
@@ -22,7 +22,7 @@ MLflow Tracking сохраняет метаданные запусков в ло
 
 ## Интерактивное обучение в PyCharm
 
-Установите зависимости из корня проекта командой `python -m pip install -r requirements.txt`. Откройте `notebooks/01_model_training_and_metrics.ipynb` как Jupyter Notebook и выберите тот же Python-интерпретатор. Запускайте ячейки сверху вниз: ноутбук проверит данные и покажет EDA-графики, подготовит split из `data/raw/`, обучит baseline-модели, сравнит настройки Linear SVM и word/char представления, покажет метрики и ошибки, сохранит результаты в `experiments/baseline/` и залогирует прогоны в MLflow. Чтобы использовать готовый split без исходных CSV, оставьте существующие файлы в `data/processed/`.
+Установите зависимости из корня проекта командой `python -m pip install -r requirements.txt`. Откройте `notebooks/01_model_training_and_metrics.ipynb` как Jupyter Notebook и выберите тот же Python-интерпретатор. Запускайте ячейки сверху вниз: ноутбук проверит данные и покажет EDA-графики, подготовит split из `data/raw/`, обучит baseline-модели, сравнит настройки Linear SVM и word/char представления, покажет метрики и ошибки, замерит latency и размер зафиксированного кандидата. Сводки сохраняются в `experiments/`, параметры — в `configs/final_model.json`, прогоны — в MLflow. Official test этим этапом не используется; его оценим отдельно после фиксации кандидата.
 
 ## Структура
 
@@ -30,6 +30,7 @@ MLflow Tracking сохраняет метаданные запусков в ло
 - `data/processed/` — воспроизводимые train/validation CSV (игнорируются Git).
 - `src/data/` — загрузка, аудит и подготовка split.
 - `src/models/` — baseline и дальнейшие модели.
+- `configs/` — параметры split, baseline и зафиксированного кандидата.
 - `experiments/baseline/` — конфигурация, метрики и диагностика ошибок.
 - `reports/` — исследование и объяснение результатов.
 - `docs/study_guide.docx` — обновляемое учебное пособие.

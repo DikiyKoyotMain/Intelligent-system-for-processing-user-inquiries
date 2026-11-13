@@ -1,0 +1,18 @@
+{
+  "model": "banking77-word-char-tfidf-linear-svm",
+  "validation_rows": 1999,
+  "validation_macro_f1": 0.898671401241978,
+  "validation_accuracy": 0.897448724362181,
+  "fit_seconds_single_run": 3.857003299999633,
+  "single_query_latency_p50_ms": 1.21065000348608,
+  "single_query_latency_p95_ms": 2.2017500006768387,
+  "batch_validation_seconds_median": 0.18524579999939306,
+  "batch_amortized_ms_per_request": 0.09266923461700503,
+  "batch_validation_throughput_requests_per_second": 10791.067867700911,
+  "serialized_model_bytes": 21354112,
+  "serialized_model_mb": 20.3648681640625,
+  "runtime_memory_measured": false,
+  "http_overhead_included": false,
+  "official_test_evaluated": false,
+  "mlflow_run_id": "dea2608fed1e42c69e62df80164e3112"
+}

@@ -51,7 +51,7 @@ for name,size,color in [('Title',25,'153B5B'),('Heading 1',17,'153B5B'),('Headin
 p=doc.add_paragraph(style='Title'); p.add_run('Исследование и разработка интеллектуальной системы обработки пользовательских обращений с применением ML, NLP и Generative AI')
 p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(10); r=p.add_run('Учебное пособие и журнал экспериментов'); r.bold=True; r.font.size=Pt(13); r.font.color.rgb=RGBColor.from_string('167D8D')
 doc.add_paragraph('Проект развивается по этапам: сначала проверяем данные и формулируем задачу, затем обучаем и сравниваем модели, после этого проектируем поиск, генерацию и API. Документ объясняет решения и пополняется реальными результатами по мере работы.')
-p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(14); p.add_run('Завершены EDA, подготовка данных, классические baseline, подбор параметров и сравнение word / char TF-IDF').bold=True
+p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(14); p.add_run('Завершены EDA, подготовка данных, классические baseline, подбор признаков и эксплуатационные замеры кандидата').bold=True
 doc.add_paragraph('Дата обновления: 13 ноября 2026')
 doc.add_page_break()
 
@@ -160,11 +160,20 @@ for title,subs in sections:
         doc.add_paragraph(f"Word TF-IDF (1–2) вместе с символьными char_wb n-граммами (3–5), C={candidate['C']}, дал Macro F1 {float(candidate['macro_f1']):.4f}. Прирост относительно word baseline составил {delta:.4f}. Fit занял {float(candidate['fit_seconds']):.2f} сек вместо {float(baseline['fit_seconds']):.2f} сек; inference latency и память ещё нужно измерить.")
         doc.add_paragraph('Текущий кандидат — объединение word и char_wb признаков. Official test не использовался. Перед финальной оценкой фиксируем конфигурацию, измеряем размер и задержку модели, затем один раз считаем метрики на official test.')
     elif title.startswith('9.'):
-        doc.add_paragraph('Финальный выбор делаем после сравнения качества, inference latency, размера сериализованной модели и ограничений проекта. Validation уже использовалась для выбора признаков, поэтому дальнейшее число попыток на ней ограничиваем. После фиксации конфигурации official test используется один раз для независимой оценки.')
+        doc.add_paragraph('Кандидат и его параметры зафиксированы в configs/final_model.json после сравнения качества на validation. Поскольку validation использовалась при выборе признаков, official test остаётся закрытым до финальной независимой оценки. По его результатам не будем повторно настраивать модель.')
+        operational_path=ROOT/'experiments'/'final_model'/'operational_metrics.json'
+        if operational_path.exists():
+            operational=json.loads(operational_path.read_text(encoding='utf-8'))
+            add_table(doc,['Замер','Результат','Условия'],[
+                ('Validation Macro F1',f"{operational['validation_macro_f1']:.4f}",'1 999 validation-запросов'),
+                ('Fit',f"{operational['fit_seconds_single_run']:.2f} сек",'Один прогон'),
+                ('Одиночный predict P50 / P95',f"{operational['single_query_latency_p50_ms']:.2f} / {operational['single_query_latency_p95_ms']:.2f} мс",'200 запросов × 10 повторов, после 32 warmup'),
+                ('Пакетный predict',f"{operational['batch_validation_seconds_median']:.3f} сек",'Медиана пяти прогонов по validation'),
+                ('Размер pipeline',f"{operational['serialized_model_mb']:.2f} MiB",'Joblib сериализация; RAM отдельно не измерялась')])
+            doc.add_paragraph('Одиночный predict измеряет estimator без HTTP/API overhead. Скорость и размер зависят от компьютера и версий библиотек; они являются локальными замерами, а не гарантией production SLA.')
         add_table(doc,['Действие','Проверка','Результат'],[
             ('Зафиксировать кандидата','word + char_wb TF-IDF, Linear SVM, C=2','Конфигурация без дальнейшего подбора на test'),
-            ('Повторить эксплуатационные замеры','Fit, predict latency P50/P95, размер joblib, память','Сравнение качества и ресурсов'),
-            ('Оценить official test один раз','Accuracy, Macro/Weighted Precision, Recall и F1','Финальная оценка обобщения'),
+            ('Оценить official test один раз','Accuracy, Macro/Weighted Precision, Recall и F1','Следующий шаг: независимая оценка обобщения'),
             ('Сохранить решение','Модель, параметры, метрики, ограничения','Воспроизводимый выбор')])
     elif title.startswith('10.'):
         doc.add_paragraph('После выбора модели оформляем inference как отдельный сервис. FastAPI принимает текст запроса, проверяет схему и длину, загружает версионированный pipeline и возвращает intent. Ошибки входных данных и непредвиденные ошибки сервиса журналируются отдельно; сырой пользовательский текст нельзя без нужды хранить в логах.')
@@ -206,8 +215,9 @@ add_table(doc,['Порядок','Работа','Результат','Артеф�
     ('4','Классические baseline','Сравнены Majority, Logistic Regression, Linear SVM и Naive Bayes; лучший baseline Macro F1=0.8795','experiments/baseline/results.csv'),
     ('5','Подбор параметров Linear SVM','Проверено 18 комбинаций word n-грамм, C и class weights; прироста не найдено','linear_svm_tuning_results.csv'),
     ('6','Сравнение word и char признаков','Проверено 7 конфигураций; word + char_wb достиг Macro F1=0.8987','word_char_comparison.csv, character_tuning_reports/'),
-    ('7','Финальная оценка','Предстоит зафиксировать candidate и один раз оценить на official test','Параметры и результаты будут добавлены после выполнения'),
-    ('8','Сервис, retrieval и эксплуатация','Предстоит определить доступные статьи поддержки, API, мониторинг и fallback','Реализация начнётся после проверки финальной модели')])
+    ('7','Фиксация кандидата и замеры','Word + char_wb Linear SVM: Macro F1=0.8987; P50/P95=1.21/2.20 мс; joblib=20.36 MiB','configs/final_model.json, experiments/final_model/operational_metrics.json'),
+    ('8','Финальная оценка','Предстоит один раз оценить зафиксированного кандидата на official test','Метрики будут добавлены после выполнения'),
+    ('9','Сервис, retrieval и эксплуатация','Предстоит определить проверенные статьи поддержки, API, мониторинг и fallback','Реализация после оценки финальной модели')])
 
 doc.add_heading('Источники данных и публикации',level=1)
 for source in [
