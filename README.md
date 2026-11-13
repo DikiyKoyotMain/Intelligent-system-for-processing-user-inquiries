@@ -44,14 +44,14 @@ from src.rag.retriever import KnowledgeRetriever
 retriever = KnowledgeRetriever.from_jsonl("data/knowledge/articles.jsonl")
 hits = retriever.search("card payment reversed", top_k=5)
 for hit in hits:
-    print(hit.title, hit.source, hit.lexical_similarity)
+    print(hit.title, hit.source, hit.score, hit.score_type)
 ```
 
-`lexical_similarity` — оценка совпадения текста, не вероятность правильного ответа. До построения ответов нужно подготовить отдельный набор запросов с релевантными статьями и измерить Recall@5 и MRR.
+У обоих ранжировщиков результат содержит `score` и `score_type`: TF-IDF возвращает cosine similarity, BM25 — свой ранжирующий балл. Ни одна оценка не является вероятностью правильного ответа. До построения ответов нужно подготовить отдельный набор запросов с релевантными статьями и измерить Recall@5 и MRR.
 
 Для оценки заведите `data/knowledge/queries.jsonl` по формату из `data/knowledge/README.md`. После загрузки retrieval в `notebooks/02_retrieval_exploration.ipynb` выполните ячейку оценки: она покажет Recall@5 и MRR по запросам с релевантными статьями и отдельно посчитает запросы без ответа в корпусе. До появления экспертной разметки эти значения не рассчитываются.
 
-В том же ноутбуке есть исследование порога abstention. Подбор порога требует отдельной калибровочной выборки с answerable и unanswerable запросами; итоговое качество нужно проверять на новом holdout наборе.
+Ноутбук также показывает сравнение TF-IDF и BM25 и исследование порога abstention. Для выбора порога нужна отдельная калибровочная выборка с answerable и unanswerable запросами; итоговое качество нужно проверять на новом holdout наборе. Численного победителя пока нет, поскольку корпус и разметка ещё не добавлены.
 
 ## Интерактивное обучение в PyCharm
 

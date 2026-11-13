@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Iterable
 
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
 
 @dataclass(frozen=True)
@@ -30,7 +30,8 @@ class RetrievalHit:
     source: str
     updated_at: str
     language: str
-    lexical_similarity: float
+    score: float
+    score_type: str
 
 
 def split_into_chunks(text: str, max_chars: int = 900, overlap_chars: int = 120) -> list[str]:
@@ -145,6 +146,76 @@ class KnowledgeRetriever:
                 source=chunk.source,
                 updated_at=chunk.updated_at,
                 language=chunk.language,
-                lexical_similarity=float(scores[index]),
+                score=float(scores[index]),
+                score_type='tfidf_cosine_similarity',
             ))
         return results
+
+
+class BM25Retriever:
+    def __init__(self, chunks: list[KnowledgeChunk], k1: float = 1.5, b: float = 0.75):
+        if not chunks:
+            raise ValueError('Для поиска требуется хотя бы один фрагмент.')
+        if k1 <= 0:
+            raise ValueError('k1 должен быть положительным.')
+        if not 0 <= b <= 1:
+            raise ValueError('b должен находиться в диапазоне от 0 до 1.')
+        self.chunks = tuple(chunks)
+        self.k1 = float(k1)
+        self.b = float(b)
+        self.vectorizer = CountVectorizer(lowercase=True, strip_accents='unicode', token_pattern=r'(?u)\b\w+\b')
+        try:
+            self.matrix = self.vectorizer.fit_transform([chunk.text for chunk in self.chunks]).tocsr()
+        except ValueError as exc:
+            raise ValueError('Во фрагментах не найдено слов для построения BM25 индекса.') from exc
+        self.document_lengths = np.asarray(self.matrix.sum(axis=1)).ravel().astype(float)
+        self.average_document_length = float(self.document_lengths.mean())
+        document_frequency = np.asarray((self.matrix > 0).sum(axis=0)).ravel().astype(float)
+        document_count = len(self.chunks)
+        self.inverse_document_frequency = np.log1p(
+            (document_count - document_frequency + 0.5) / (document_frequency + 0.5)
+        )
+
+    @classmethod
+    def from_jsonl(cls, path: str | Path, max_chars: int = 900, overlap_chars: int = 120, **kwargs) -> BM25Retriever:
+        documents = load_documents(Path(path))
+        chunks = make_chunks(documents, max_chars=max_chars, overlap_chars=overlap_chars)
+        return cls(chunks, **kwargs)
+
+    def search(self, query: str, top_k: int = 5, language: str | None = None) -> list[RetrievalHit]:
+        if not isinstance(query, str) or not query.strip():
+            raise ValueError('Поисковый запрос не должен быть пустым.')
+        if top_k < 1:
+            raise ValueError('top_k должен быть положительным.')
+        query_vector = self.vectorizer.transform([query.strip()])
+        query_terms = query_vector.indices
+        scores = np.zeros(len(self.chunks), dtype=float)
+        if len(query_terms) and self.average_document_length > 0:
+            length_norm = self.k1 * (
+                1 - self.b + self.b * self.document_lengths / self.average_document_length
+            )
+            for term_index in query_terms:
+                term_frequency = self.matrix.getcol(int(term_index)).toarray().ravel()
+                denominator = term_frequency + length_norm
+                scores += self.inverse_document_frequency[term_index] * (
+                    term_frequency * (self.k1 + 1) / np.maximum(denominator, np.finfo(float).eps)
+                )
+        candidates = [
+            index for index, chunk in enumerate(self.chunks)
+            if language is None or chunk.language.casefold() == language.casefold()
+        ]
+        candidates.sort(key=lambda index: (-float(scores[index]), self.chunks[index].chunk_id))
+        return [
+            RetrievalHit(
+                document_id=self.chunks[index].document_id,
+                chunk_id=self.chunks[index].chunk_id,
+                title=self.chunks[index].title,
+                text=self.chunks[index].text,
+                source=self.chunks[index].source,
+                updated_at=self.chunks[index].updated_at,
+                language=self.chunks[index].language,
+                score=float(scores[index]),
+                score_type='bm25',
+            )
+            for index in candidates[:top_k]
+        ]

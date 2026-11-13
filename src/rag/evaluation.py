@@ -5,7 +5,7 @@ import math
 from pathlib import Path
 from typing import Iterable
 
-from src.rag.retriever import KnowledgeRetriever
+from src.rag.retriever import BM25Retriever, KnowledgeRetriever
 
 
 def load_queries(path: str | Path) -> list[dict]:
@@ -38,7 +38,7 @@ def load_queries(path: str | Path) -> list[dict]:
 
 
 def evaluate_retrieval(
-    retriever: KnowledgeRetriever,
+    retriever: KnowledgeRetriever | BM25Retriever,
     examples: Iterable[dict],
     k: int = 5,
 ) -> dict:
@@ -92,7 +92,7 @@ def evaluate_retrieval(
 
 
 def sweep_abstention_thresholds(
-    retriever: KnowledgeRetriever,
+    retriever: KnowledgeRetriever | BM25Retriever,
     examples: Iterable[dict],
     thresholds: Iterable[float] | None = None,
 ) -> list[dict]:
@@ -110,7 +110,7 @@ def sweep_abstention_thresholds(
         top_hit = retriever.search(query, top_k=1)[0]
         judged.append({
             'is_answerable': bool(relevant_ids),
-            'top_score': top_hit.lexical_similarity,
+            'top_score': top_hit.score,
             'top_is_relevant': top_hit.document_id in relevant_ids,
         })
     if not any(row['is_answerable'] for row in judged):
