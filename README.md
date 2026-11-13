@@ -4,7 +4,7 @@
 
 ## Текущий этап
 
-**Завершены исследование данных, EDA, подготовка split, сравнение и финальная оценка модели; добавлен код локального HTTP API для классификации.** Зафиксирован Linear SVM с word + char_wb TF-IDF; official test оценён один раз и больше не используется для настройки. Проверка запуска API остаётся следующим шагом. Подробности — в `reports/research.md`, `configs/final_model.json` и `experiments/`.
+**Завершены исследование данных, EDA, подготовка split, сравнение и финальная оценка модели; добавлен локальный HTTP API классификации и первый lexical retrieval по статьям.** Зафиксирован Linear SVM с word + char_wb TF-IDF; official test оценён один раз и больше не используется для настройки. Качество поиска пока не измерено: в проекте отсутствуют одобренные статьи поддержки. Подробности — в `reports/research.md`, `configs/final_model.json` и `experiments/`.
 
 ## Воспроизведение
 
@@ -32,6 +32,23 @@ python -m uvicorn src.api.main:app --reload
 
 API не возвращает confidence: используемый Linear SVM не откалиброван в вероятности. Текст запроса не включается в сообщения журнала приложения.
 
+## База знаний и поиск статей
+
+Подготовьте одобренный корпус в `data/knowledge/articles.jsonl`: одна статья JSON на строку, с полями `id`, `title`, `content`, `source`, `updated_at`, `language`. Формат, правила подготовки и пример поиска описаны в `data/knowledge/README.md`. В проекте пока нет статей: BANKING77 содержит обращения и метки намерений, а не проверенные ответы.
+
+`src/rag/retriever.py` проверяет документы, делит текст на фрагменты с перекрытием и ищет их по word TF-IDF. Поиск можно посмотреть из Python после добавления корпуса:
+
+```python
+from src.rag.retriever import KnowledgeRetriever
+
+retriever = KnowledgeRetriever.from_jsonl("data/knowledge/articles.jsonl")
+hits = retriever.search("card payment reversed", top_k=5)
+for hit in hits:
+    print(hit.title, hit.source, hit.lexical_similarity)
+```
+
+`lexical_similarity` — оценка совпадения текста, не вероятность правильного ответа. До построения ответов нужно подготовить отдельный набор запросов с релевантными статьями и измерить Recall@5 и MRR.
+
 ## Интерактивное обучение в PyCharm
 
 Установите зависимости из корня проекта командой `python -m pip install -r requirements.txt`. Откройте `notebooks/01_model_training_and_metrics.ipynb` как Jupyter Notebook и выберите тот же Python-интерпретатор. Запускайте ячейки сверху вниз: ноутбук проверит данные и покажет EDA-графики, подготовит split из `data/raw/`, обучит baseline-модели, сравнит настройки Linear SVM и word/char представления, покажет метрики и ошибки, замерит latency, а в последней ячейке покажет сохранённый результат official test без повторного вызова модели. Сводки сохраняются в `experiments/`, параметры — в `configs/final_model.json`, прогоны — в MLflow.
@@ -43,6 +60,8 @@ API не возвращает confidence: используемый Linear SVM н
 - `src/data/` — загрузка, аудит и подготовка split.
 - `src/models/` — baseline и дальнейшие модели.
 - `src/api/` — HTTP API для intent classification.
+- `src/rag/` — подготовка фрагментов и базовый lexical retrieval для одобренных статей.
+- `data/knowledge/` — формат и инструкции для корпуса поддержки; сами статьи пока не добавлены.
 - `configs/` — параметры split, baseline и зафиксированного кандидата.
 - `experiments/baseline/` — конфигурация, метрики и диагностика ошибок.
 - `reports/` — исследование и объяснение результатов.

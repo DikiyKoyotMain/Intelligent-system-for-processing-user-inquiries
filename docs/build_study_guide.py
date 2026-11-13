@@ -40,6 +40,15 @@ def add_figure(doc, path, caption, width=5.6):
     p=doc.add_paragraph(caption); p.alignment=WD_ALIGN_PARAGRAPH.CENTER
     for r in p.runs: r.italic=True; r.font.size=Pt(9); r.font.color.rgb=RGBColor(83,100,116)
 
+def add_code_block(doc, code):
+    for line in code.strip('\n').splitlines():
+        paragraph=doc.add_paragraph()
+        paragraph.paragraph_format.left_indent=Inches(.16)
+        paragraph.paragraph_format.space_after=Pt(0)
+        paragraph.paragraph_format.keep_together=True
+        pPr=paragraph._p.get_or_add_pPr(); shading=OxmlElement('w:shd'); shading.set(qn('w:fill'),'F1F5F8'); pPr.append(shading)
+        run=paragraph.add_run(line or ' '); run.font.name='Consolas'; run.font.size=Pt(8)
+
 
 doc=Document(); sec=doc.sections[0]
 sec.top_margin=Inches(.72); sec.bottom_margin=Inches(.72); sec.left_margin=Inches(.82); sec.right_margin=Inches(.82)
@@ -205,7 +214,19 @@ for title,subs in sections:
             ('GET /health/ready','Проверить готовность модели','503, если артефакт отсутствует или не загрузился'),
             ('POST /v1/classify','Вернуть intent для одного текста','422 для некорректного тела; 503 без модели; 500 при ошибке предсказания')])
         doc.add_paragraph('Пример тела запроса: {"text":"I lost my card"}. Ответ содержит текстовую метку intent, случайный request_id для связи с журналами и версию модели. Swagger/OpenAPI доступен через /docs. Сейчас это локальный учебный API: аутентификация, rate limiting, TLS termination, метрики сервера и мониторинг качества не добавлены; перед внешним размещением эти компоненты нужно спроектировать отдельно.')
-        doc.add_paragraph('RAG не строится на одних метках BANKING77: для него нужны проверенные статьи поддержки с источниками, владельцем и датой актуальности. Retrieval должен возвращать релевантные выдержки, а генератор — отвечать с указанием источников и передавать запрос оператору, если доказательств недостаточно. Корпус статей пока не подключён.')
+        doc.add_heading('Первый слой поиска по статьям',level=2)
+        doc.add_paragraph('BANKING77 содержит обращения и метки намерений, но не содержит проверенных ответов. Поэтому поиск отделён от генерации: сначала система должна уметь находить и показывать фрагменты одобренных статей, а уже затем можно обсуждать генератор. Сейчас в репозитории нет такого корпуса, поэтому точность поиска, Recall@5 и MRR не измерялись.')
+        doc.add_paragraph('Для статьи требуются стабильный уникальный id, заголовок, содержание, ссылка на первоисточник, дата актуальности и язык. Формат JSONL и требования к владению и разрешению на использование описаны в data/knowledge/README.md. Загрузчик сообщает строку некорректного JSON, проверяет обязательные поля и не допускает повторяющиеся идентификаторы.')
+        doc.add_paragraph('Текст очищается от лишних пробелов и режется на фрагменты до 900 символов с перекрытием 120 символов. Перекрытие сохраняет часть контекста у границы соседних фрагментов. Индекс — word TF-IDF для unigram и bigram. Этот прозрачный baseline выбран потому, что его легко запустить и разобрать, он использует уже установленный scikit-learn и даёт точные фрагменты для ручной проверки. Он лучше всего подходит как точка сравнения для последующего BM25 или эмбеддингов, но не гарантирует семантический поиск синонимов.')
+        doc.add_paragraph('В ноутбуке 02_retrieval_exploration.ipynb после добавления data/knowledge/articles.jsonl можно загрузить корпус и вывести пять совпадений. similarity — скалярное произведение L2-нормированных TF-IDF векторов (cosine similarity); это сырая мера лексического сходства, а не вероятность того, что ответ верен.')
+        add_code_block(doc,'''from src.rag.retriever import KnowledgeRetriever
+
+retriever = KnowledgeRetriever.from_jsonl("data/knowledge/articles.jsonl")
+hits = retriever.search("card payment reversed", top_k=5)
+for hit in hits:
+    print(hit.title, hit.source, hit.lexical_similarity)
+    print(hit.text)''')
+        doc.add_paragraph('Проверка качества требует отдельной выборки запросов с экспертно отмеченными relevant_document_ids. Recall@5 покажет долю запросов, для которых хотя бы один релевантный документ находится среди первых пяти; MRR учитывает позицию первого релевантного документа. Сравнение lexical baseline, BM25 и эмбеддингов нужно проводить на одних запросах и одних метках. Запросы без ответа в корпусе нужны для определения поведения отказа и передачи оператору. Генерацию подключать после этой проверки; качество retrieval и качество ответа оценивать отдельно.')
         add_table(doc,['Слой','Ответственность','Проверка'],[
             ('API','Валидация входа и единый формат ответа','Контракты и коды ошибок'),
             ('Intent model','Классификация запроса','Версия, метрики и fallback'),
@@ -246,7 +267,7 @@ add_table(doc,['Порядок','Работа','Результат','Артеф�
     ('7','Фиксация кандидата и замеры','Word + char_wb Linear SVM: Macro F1=0.8987; P50/P95=1.21/2.20 мс; joblib=20.36 MiB','configs/final_model.json, experiments/final_model/operational_metrics.json'),
     ('8','Финальная оценка','Official test: 3 080 запросов; Accuracy=0.9010, Macro F1=0.9011; тест не использовался для настройки','experiments/final_model/test_metrics.json, classification_report.csv, confusion_matrix.csv'),
     ('9','HTTP API классификации','Добавлены predict endpoint, валидация, health/readiness и версия модели; HTTP запуск предстоит проверить','src/api/main.py, README.md'),
-    ('10','Retrieval и RAG','Нужны одобренные статьи поддержки и их владельцы; затем спроектировать индексацию, поиск, источники и отказ при нехватке контекста','Начать после получения проверенного корпуса')])
+    ('10','Retrieval и RAG','Реализованы проверка JSONL, чанки до 900 символов с перекрытием 120 и word TF-IDF поиск; метрики не заявляются до появления размеченных статей','src/rag/retriever.py, data/knowledge/README.md, notebooks/02_retrieval_exploration.ipynb')])
 
 doc.add_heading('Источники данных и публикации',level=1)
 for source in [
