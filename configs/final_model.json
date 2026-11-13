@@ -11,7 +11,10 @@
     "combiner": "sklearn.pipeline.FeatureUnion",
     "word_tfidf": {
       "analyzer": "word",
-      "ngram_range": [1, 2],
+      "ngram_range": [
+        1,
+        2
+      ],
       "min_df": 1,
       "sublinear_tf": true,
       "lowercase": true,
@@ -20,7 +23,10 @@
     },
     "char_wb_tfidf": {
       "analyzer": "char_wb",
-      "ngram_range": [3, 5],
+      "ngram_range": [
+        3,
+        5
+      ],
       "min_df": 2,
       "sublinear_tf": true,
       "lowercase": true
@@ -31,7 +37,9 @@
     "metric": "macro_f1",
     "value": 0.898671401241978,
     "comparison_csv": "experiments/baseline/word_char_comparison.csv",
-    "official_test_evaluated": false
+    "official_test_evaluated": true,
+    "test_results": "experiments/final_model/test_metrics.json",
+    "test_file_sha256": "d12d6e3bc4c3103966ae786dc435913c0c563dfa328f5a3646d0e62cfeeb474d"
   },
   "benchmark": {
     "warmup_requests": 32,

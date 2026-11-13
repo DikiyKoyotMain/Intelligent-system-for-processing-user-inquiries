@@ -1,0 +1,16 @@
+{
+  "model": "banking77-word-char-tfidf-linear-svm",
+  "evaluation_split": "official_test",
+  "test_rows": 3080,
+  "classes": 77,
+  "accuracy": 0.900974025974026,
+  "macro_precision": 0.9038572654437964,
+  "macro_recall": 0.900974025974026,
+  "macro_f1": 0.9010595521672821,
+  "weighted_precision": 0.9038572654437964,
+  "weighted_recall": 0.900974025974026,
+  "weighted_f1": 0.9010595521672818,
+  "source_test_sha256": "d12d6e3bc4c3103966ae786dc435913c0c563dfa328f5a3646d0e62cfeeb474d",
+  "metrics_are_for_final_reporting_only": true,
+  "mlflow_run_id": "46e8ba20b64843709d84f516a3c36b2a"
+}

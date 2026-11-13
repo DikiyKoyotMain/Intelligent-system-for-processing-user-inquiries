@@ -14,5 +14,8 @@
   "runtime_memory_measured": false,
   "http_overhead_included": false,
   "official_test_evaluated": false,
-  "mlflow_run_id": "dea2608fed1e42c69e62df80164e3112"
+  "mlflow_run_id": "dea2608fed1e42c69e62df80164e3112",
+  "validation_macro_precision": 0.90357361819279,
+  "validation_macro_recall": 0.8977193236596219,
+  "validation_weighted_f1": 0.8971360181747196
 }

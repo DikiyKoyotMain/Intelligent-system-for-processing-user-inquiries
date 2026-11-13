@@ -160,7 +160,7 @@ for title,subs in sections:
         doc.add_paragraph(f"Word TF-IDF (1–2) вместе с символьными char_wb n-граммами (3–5), C={candidate['C']}, дал Macro F1 {float(candidate['macro_f1']):.4f}. Прирост относительно word baseline составил {delta:.4f}. Fit занял {float(candidate['fit_seconds']):.2f} сек вместо {float(baseline['fit_seconds']):.2f} сек; inference latency и память ещё нужно измерить.")
         doc.add_paragraph('Текущий кандидат — объединение word и char_wb признаков. Official test не использовался. Перед финальной оценкой фиксируем конфигурацию, измеряем размер и задержку модели, затем один раз считаем метрики на official test.')
     elif title.startswith('9.'):
-        doc.add_paragraph('Кандидат и его параметры зафиксированы в configs/final_model.json после сравнения качества на validation. Поскольку validation использовалась при выборе признаков, official test остаётся закрытым до финальной независимой оценки. По его результатам не будем повторно настраивать модель.')
+        doc.add_paragraph('Кандидат и его параметры зафиксированы в configs/final_model.json после сравнения качества на validation. После фиксации конфигурации один раз оценили её на official test. Эти метрики являются финальным отчётом и не используются для перенастройки модели.')
         operational_path=ROOT/'experiments'/'final_model'/'operational_metrics.json'
         if operational_path.exists():
             operational=json.loads(operational_path.read_text(encoding='utf-8'))
@@ -171,10 +171,32 @@ for title,subs in sections:
                 ('Пакетный predict',f"{operational['batch_validation_seconds_median']:.3f} сек",'Медиана пяти прогонов по validation'),
                 ('Размер pipeline',f"{operational['serialized_model_mb']:.2f} MiB",'Joblib сериализация; RAM отдельно не измерялась')])
             doc.add_paragraph('Одиночный predict измеряет estimator без HTTP/API overhead. Скорость и размер зависят от компьютера и версий библиотек; они являются локальными замерами, а не гарантией production SLA.')
+        test_metrics_path=ROOT/'experiments'/'final_model'/'test_metrics.json'
+        if test_metrics_path.exists():
+            test_metrics=json.loads(test_metrics_path.read_text(encoding='utf-8'))
+            validation_metrics=json.loads(operational_path.read_text(encoding='utf-8'))
+            add_table(doc,['Выборка','Строки','Accuracy','Macro Precision','Macro Recall','Macro F1','Weighted F1'],[
+                ('Validation',validation_metrics['validation_rows'],f"{validation_metrics['validation_accuracy']:.4f}",f"{validation_metrics['validation_macro_precision']:.4f}",f"{validation_metrics['validation_macro_recall']:.4f}",f"{validation_metrics['validation_macro_f1']:.4f}",f"{validation_metrics['validation_weighted_f1']:.4f}"),
+                ('Official test',test_metrics['test_rows'],f"{test_metrics['accuracy']:.4f}",f"{test_metrics['macro_precision']:.4f}",f"{test_metrics['macro_recall']:.4f}",f"{test_metrics['macro_f1']:.4f}",f"{test_metrics['weighted_f1']:.4f}")])
+            doc.add_paragraph('Official test содержит по 40 запросов на каждый из 77 классов, поэтому support одинаковый и macro/weighted агрегаты совпадают или почти совпадают. Accuracy составила 0.9010, Macro F1 — 0.9011. Разница с validation небольшая; модель и параметры после просмотра test не менялись.')
+            add_figure(doc,ROOT/'experiments'/'final_model'/'confusion_matrix.png','Итоговая матрица ошибок кандидата на official test. Результаты используются для отчёта, а не для повторного подбора.',5.8)
+            confusion_path=ROOT/'experiments'/'final_model'/'confusion_matrix.csv'
+            errors=[]
+            with confusion_path.open(encoding='utf-8',newline='') as f:
+                reader=csv.DictReader(f)
+                predicted_labels=[name for name in reader.fieldnames if name!='true_label']
+                for row in reader:
+                    true_label=row['true_label']
+                    for predicted_label in predicted_labels:
+                        count=int(row[predicted_label])
+                        if true_label!=predicted_label and count>0:
+                            errors.append((count,true_label,predicted_label))
+            errors.sort(reverse=True)
+            add_table(doc,['Истинный класс','Предсказанный класс','Ошибок'],[(a,b,c) for c,a,b in errors[:5]])
         add_table(doc,['Действие','Проверка','Результат'],[
             ('Зафиксировать кандидата','word + char_wb TF-IDF, Linear SVM, C=2','Конфигурация без дальнейшего подбора на test'),
-            ('Оценить official test один раз','Accuracy, Macro/Weighted Precision, Recall и F1','Следующий шаг: независимая оценка обобщения'),
-            ('Сохранить решение','Модель, параметры, метрики, ограничения','Воспроизводимый выбор')])
+            ('Оценить official test один раз','Accuracy, Macro/Weighted Precision, Recall и F1','Выполнено, без повторной настройки'),
+            ('Сохранить решение','Модель, параметры, метрики, ограничения','Кандидат готов к реализации сервиса')])
     elif title.startswith('10.'):
         doc.add_paragraph('После выбора модели оформляем inference как отдельный сервис. FastAPI принимает текст запроса, проверяет схему и длину, загружает версионированный pipeline и возвращает intent. Ошибки входных данных и непредвиденные ошибки сервиса журналируются отдельно; сырой пользовательский текст нельзя без нужды хранить в логах.')
         doc.add_paragraph('RAG не строится на одних метках BANKING77: нужны проверенные статьи поддержки с источниками, владельцем и датой актуальности. Retrieval возвращает выдержки, генератор отвечает на их основе и указывает источники. Если доказательств недостаточно, система должна воздержаться от уверенного ответа и передать запрос оператору.')
@@ -216,8 +238,8 @@ add_table(doc,['Порядок','Работа','Результат','Артеф�
     ('5','Подбор параметров Linear SVM','Проверено 18 комбинаций word n-грамм, C и class weights; прироста не найдено','linear_svm_tuning_results.csv'),
     ('6','Сравнение word и char признаков','Проверено 7 конфигураций; word + char_wb достиг Macro F1=0.8987','word_char_comparison.csv, character_tuning_reports/'),
     ('7','Фиксация кандидата и замеры','Word + char_wb Linear SVM: Macro F1=0.8987; P50/P95=1.21/2.20 мс; joblib=20.36 MiB','configs/final_model.json, experiments/final_model/operational_metrics.json'),
-    ('8','Финальная оценка','Предстоит один раз оценить зафиксированного кандидата на official test','Метрики будут добавлены после выполнения'),
-    ('9','Сервис, retrieval и эксплуатация','Предстоит определить проверенные статьи поддержки, API, мониторинг и fallback','Реализация после оценки финальной модели')])
+    ('8','Финальная оценка','Official test: 3 080 запросов; Accuracy=0.9010, Macro F1=0.9011; тест не использовался для настройки','experiments/final_model/test_metrics.json, classification_report.csv, confusion_matrix.csv'),
+    ('9','Сервис, retrieval и эксплуатация','Предстоит определить проверенные статьи поддержки, API, мониторинг и fallback','Следующая разработка после фиксации классификатора')])
 
 doc.add_heading('Источники данных и публикации',level=1)
 for source in [

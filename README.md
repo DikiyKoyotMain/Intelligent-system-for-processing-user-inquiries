@@ -4,7 +4,7 @@
 
 ## Текущий этап
 
-**Завершены исследование данных, EDA, подготовка split, classical baseline, подбор настроек Linear SVM, сравнение словесных с символьными n-граммами и эксплуатационные замеры кандидата.** Зафиксирован Linear SVM с word + char_wb TF-IDF; official test сохранён для следующей финальной оценки. Подробности — в `reports/research.md`, `configs/final_model.json` и `experiments/`.
+**Завершены исследование данных, EDA, подготовка split, classical baseline, подбор признаков, эксплуатационные замеры и однократная финальная оценка.** Зафиксирован Linear SVM с word + char_wb TF-IDF; official test оценён один раз и больше не используется для настройки. Подробности — в `reports/research.md`, `configs/final_model.json` и `experiments/`.
 
 ## Воспроизведение
 
@@ -22,7 +22,7 @@ MLflow Tracking сохраняет метаданные запусков в ло
 
 ## Интерактивное обучение в PyCharm
 
-Установите зависимости из корня проекта командой `python -m pip install -r requirements.txt`. Откройте `notebooks/01_model_training_and_metrics.ipynb` как Jupyter Notebook и выберите тот же Python-интерпретатор. Запускайте ячейки сверху вниз: ноутбук проверит данные и покажет EDA-графики, подготовит split из `data/raw/`, обучит baseline-модели, сравнит настройки Linear SVM и word/char представления, покажет метрики и ошибки, замерит latency и размер зафиксированного кандидата. Сводки сохраняются в `experiments/`, параметры — в `configs/final_model.json`, прогоны — в MLflow. Official test этим этапом не используется; его оценим отдельно после фиксации кандидата.
+Установите зависимости из корня проекта командой `python -m pip install -r requirements.txt`. Откройте `notebooks/01_model_training_and_metrics.ipynb` как Jupyter Notebook и выберите тот же Python-интерпретатор. Запускайте ячейки сверху вниз: ноутбук проверит данные и покажет EDA-графики, подготовит split из `data/raw/`, обучит baseline-модели, сравнит настройки Linear SVM и word/char представления, покажет метрики и ошибки, замерит latency, а в последней ячейке покажет сохранённый результат official test без повторного вызова модели. Сводки сохраняются в `experiments/`, параметры — в `configs/final_model.json`, прогоны — в MLflow.
 
 ## Структура
 
