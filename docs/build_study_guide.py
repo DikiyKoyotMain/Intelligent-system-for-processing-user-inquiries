@@ -60,14 +60,14 @@ for name,size,color in [('Title',25,'153B5B'),('Heading 1',17,'153B5B'),('Headin
 p=doc.add_paragraph(style='Title'); p.add_run('Исследование и разработка интеллектуальной системы обработки пользовательских обращений с применением ML, NLP и Generative AI')
 p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(10); r=p.add_run('Учебное пособие и журнал экспериментов'); r.bold=True; r.font.size=Pt(13); r.font.color.rgb=RGBColor.from_string('167D8D')
 doc.add_paragraph('Проект развивается по этапам: сначала проверяем данные и формулируем задачу, затем обучаем и сравниваем модели, после этого проектируем поиск, генерацию и API. Документ объясняет решения и пополняется реальными результатами по мере работы.')
-p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(14); p.add_run('Завершены EDA, подготовка данных, классические baseline, подбор признаков и эксплуатационные замеры кандидата').bold=True
+p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(14); p.add_run('Завершены EDA, обучение и финальная оценка классификатора, локальный API и первый retrieval baseline с подготовленной оценкой качества').bold=True
 doc.add_paragraph('Дата обновления: 13 ноября 2026')
 doc.add_page_break()
 
 doc.add_heading('Оглавление', level=1); p=doc.add_paragraph(); field(p,'TOC \\o "1-2" \\h \\z \\u')
 doc.add_paragraph('В Word выберите оглавление и обновите поле, если номера страниц не обновились автоматически.')
 doc.add_heading('Как читать это пособие', level=1)
-doc.add_paragraph('Каждый этап объясняет задачу и варианты решения, фиксирует выбранный подход и его причины, затем показывает реализацию, фактические результаты и следующие эксперименты. Все приведённые метрики получены на validation; официальный test пока не использовался для сравнения моделей.')
+doc.add_paragraph('Каждый этап объясняет задачу и варианты решения, фиксирует выбранный подход и его причины, затем показывает реализацию, фактические результаты и следующие эксперименты. Для intent classification приведены validation и однократные финальные метрики official test. Для retrieval метрик пока нет: одобренный корпус и размеченные запросы ещё не добавлены.')
 
 sections=[
 ('1. Постановка задачи',['Бизнес-проблема и цель','Формализация intent classification','Входы, выходы и критерии успеха']),
@@ -167,7 +167,7 @@ for title,subs in sections:
         baseline=next(r for r in comparison if r['model']=='tfidf_linear_svm')
         delta=float(candidate['macro_f1'])-float(baseline['macro_f1'])
         doc.add_paragraph(f"Word TF-IDF (1–2) вместе с символьными char_wb n-граммами (3–5), C={candidate['C']}, дал Macro F1 {float(candidate['macro_f1']):.4f}. Прирост относительно word baseline составил {delta:.4f}. Fit занял {float(candidate['fit_seconds']):.2f} сек вместо {float(baseline['fit_seconds']):.2f} сек; inference latency и память ещё нужно измерить.")
-        doc.add_paragraph('Текущий кандидат — объединение word и char_wb признаков. Official test не использовался. Перед финальной оценкой фиксируем конфигурацию, измеряем размер и задержку модели, затем один раз считаем метрики на official test.')
+        doc.add_paragraph('Кандидат — объединение word и char_wb признаков. После фиксации конфигурации измерили размер и задержку, затем один раз посчитали метрики на official test. Этот набор не использовался для настройки модели.')
     elif title.startswith('9.'):
         doc.add_paragraph('Кандидат и его параметры зафиксированы в configs/final_model.json после сравнения качества на validation. После фиксации конфигурации один раз оценили её на official test. Эти метрики являются финальным отчётом и не используются для перенастройки модели.')
         operational_path=ROOT/'experiments'/'final_model'/'operational_metrics.json'
@@ -226,7 +226,14 @@ hits = retriever.search("card payment reversed", top_k=5)
 for hit in hits:
     print(hit.title, hit.source, hit.lexical_similarity)
     print(hit.text)''')
-        doc.add_paragraph('Проверка качества требует отдельной выборки запросов с экспертно отмеченными relevant_document_ids. Recall@5 покажет долю запросов, для которых хотя бы один релевантный документ находится среди первых пяти; MRR учитывает позицию первого релевантного документа. Сравнение lexical baseline, BM25 и эмбеддингов нужно проводить на одних запросах и одних метках. Запросы без ответа в корпусе нужны для определения поведения отказа и передачи оператору. Генерацию подключать после этой проверки; качество retrieval и качество ответа оценивать отдельно.')
+        doc.add_paragraph('Проверка качества требует отдельной выборки запросов с экспертно отмеченными relevant_document_ids. Recall@5 усредняет долю релевантных статей, которые попали в первые пять; MRR учитывает позицию первой релевантной статьи. Сравнение lexical baseline, BM25 и эмбеддингов нужно проводить на одних запросах и одних метках. Запросы без ответа в корпусе нужны для определения поведения отказа и передачи оператору. Генерацию подключать после этой проверки; качество retrieval и качество ответа оценивать отдельно.')
+        doc.add_paragraph('Оценщик находится в src/rag/evaluation.py. Он проверяет JSONL с запросами, убеждается, что размеченные ID есть в корпусе, ранжирует уникальные документы (несколько совпавших фрагментов одной статьи не занимают несколько мест) и возвращает метрики и результаты по каждому запросу. Recall@5 для одного запроса — число найденных в первых пяти релевантных статей, делённое на полное число релевантных статей; MRR — обратная позиция первой релевантной статьи. Усреднение проводится только по answerable запросам. Запросы с пустым списком статей учитываются отдельно и не включаются в Recall@5/MRR: эти метрики сами по себе не измеряют корректность отказа.')
+        add_code_block(doc,'''from src.rag.evaluation import load_queries, evaluate_retrieval
+
+examples = load_queries("data/knowledge/queries.jsonl")
+metrics = evaluate_retrieval(retriever, examples, k=5)
+print(metrics["recall_at_5"], metrics["mrr"])''')
+        doc.add_paragraph('Реализация метрик не означает, что эксперимент уже проведён. Без экспертной разметки нельзя назвать Recall@5 или MRR и сравнить lexical TF-IDF с BM25 или эмбеддингами. Для честного сравнения фиксируйте одну и ту же размеченную выборку; после настройки retrieval подготовьте новый независимый набор для финальной оценки.')
         add_table(doc,['Слой','Ответственность','Проверка'],[
             ('API','Валидация входа и единый формат ответа','Контракты и коды ошибок'),
             ('Intent model','Классификация запроса','Версия, метрики и fallback'),
@@ -256,7 +263,7 @@ for hit in hits:
         doc.add_paragraph('Понятия, варианты подхода, обоснование выбора, реализация и результаты будут добавлены на соответствующем этапе.')
 
 doc.add_heading('Журнал разработки',level=1)
-doc.add_paragraph('Ниже зафиксирована последовательность выполненных работ и следующий согласованный шаг. Численные итоги соответствуют фактическим validation экспериментам; результаты official test будут добавлены только после фиксации финального кандидата.')
+doc.add_paragraph('Ниже зафиксирована последовательность выполненных работ и следующий шаг. Результаты intent classification включают validation и однократную финальную оценку official test; retrieval-метрики появятся после добавления корпуса и экспертной разметки.')
 add_table(doc,['Порядок','Работа','Результат','Артефакты'],[
     ('1','Постановка задачи и поиск открытых данных','Выбрана 77-классовая intent classification задача BANKING77; зафиксированы лицензия и ограничения','reports/research.md'),
     ('2','EDA источника','10 003 train и 3 080 test; проверены схема, пропуски, классы, длина текста, повторы и пересечения','reports/eda_summary.json, reports/figures/'),
@@ -267,7 +274,8 @@ add_table(doc,['Порядок','Работа','Результат','Артеф�
     ('7','Фиксация кандидата и замеры','Word + char_wb Linear SVM: Macro F1=0.8987; P50/P95=1.21/2.20 мс; joblib=20.36 MiB','configs/final_model.json, experiments/final_model/operational_metrics.json'),
     ('8','Финальная оценка','Official test: 3 080 запросов; Accuracy=0.9010, Macro F1=0.9011; тест не использовался для настройки','experiments/final_model/test_metrics.json, classification_report.csv, confusion_matrix.csv'),
     ('9','HTTP API классификации','Добавлены predict endpoint, валидация, health/readiness и версия модели; HTTP запуск предстоит проверить','src/api/main.py, README.md'),
-    ('10','Retrieval и RAG','Реализованы проверка JSONL, чанки до 900 символов с перекрытием 120 и word TF-IDF поиск; метрики не заявляются до появления размеченных статей','src/rag/retriever.py, data/knowledge/README.md, notebooks/02_retrieval_exploration.ipynb')])
+    ('10','Retrieval baseline','Реализованы проверка корпуса, чанки до 900 символов с перекрытием 120, word TF-IDF поиск и просмотр в Jupyter; метрик пока нет без базы статей','src/rag/retriever.py, notebooks/02_retrieval_exploration.ipynb'),
+    ('11','Оценка поиска','Добавлены проверка JSONL запросов, ранжирование уникальных статей, Recall@5, MRR и учёт запросов без ответа; реальные метрики ожидают экспертной разметки','src/rag/evaluation.py, data/knowledge/README.md')])
 
 doc.add_heading('Источники данных и публикации',level=1)
 for source in [
