@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+mlruns/
+outputs/
+*.log
+.DS_Store
+Thumbs.db
+data/raw/*
+!data/raw/.gitkeep
