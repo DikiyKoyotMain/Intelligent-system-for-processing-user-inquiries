@@ -9,8 +9,6 @@ from pathlib import Path
 import joblib
 import mlflow
 import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import sklearn
@@ -56,6 +54,9 @@ def build_models(config: dict) -> dict:
 
 
 def main() -> None:
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
     config_path = ROOT / 'configs' / 'baseline.json'
     config = json.loads(config_path.read_text(encoding='utf-8'))
     tracking_db = ROOT / config['tracking']['database']
@@ -78,7 +79,7 @@ def main() -> None:
     }
     for name, model in build_models(config).items():
         t0 = time.perf_counter(); model.fit(X_train, y_train); fit_seconds = time.perf_counter() - t0
-        model.predict(X_val.iloc[:min(config['timing']['warmup_requests'], len(X_val))])  # warm-up
+        model.predict(X_val.iloc[:min(config['timing']['warmup_requests'], len(X_val))])
         timings = []
         for _ in range(config['timing']['full_validation_repeats']):
             start = time.perf_counter(); pred = model.predict(X_val); timings.append(time.perf_counter() - start)
