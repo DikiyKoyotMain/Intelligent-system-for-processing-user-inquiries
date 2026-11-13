@@ -234,6 +234,17 @@ examples = load_queries("data/knowledge/queries.jsonl")
 metrics = evaluate_retrieval(retriever, examples, k=5)
 print(metrics["recall_at_5"], metrics["mrr"])''')
         doc.add_paragraph('Реализация метрик не означает, что эксперимент уже проведён. Без экспертной разметки нельзя назвать Recall@5 или MRR и сравнить lexical TF-IDF с BM25 или эмбеддингами. Для честного сравнения фиксируйте одну и ту же размеченную выборку; после настройки retrieval подготовьте новый независимый набор для финальной оценки.')
+        doc.add_heading('Порог отказа и безопасная выдача',level=2)
+        doc.add_paragraph('Поиск должен уметь воздержаться от выдачи статьи, когда совпадение слабое или top-1 статья не подтверждена разметкой. Функция sweep_abstention_thresholds перебирает пороги сырого lexical similarity. Для каждого порога она считает coverage (сколько запросов приняты), precision/recall/F1 поддержанных ответов, долю принятых запросов без релевантного top-1 и false accept rate на unanswerable запросах. Принятый ответ засчитывается как поддержанный только если запрос имеет релевантную статью и top-1 документ входит в экспертный список.')
+        add_code_block(doc,'''from src.rag.evaluation import sweep_abstention_thresholds
+import pandas as pd
+
+threshold_results = sweep_abstention_thresholds(retriever, examples)
+threshold_table = pd.DataFrame(threshold_results)
+threshold_table.sort_values(
+    ["supported_answer_f1", "coverage"], ascending=False
+).head(10)''')
+        doc.add_paragraph('Эту таблицу можно использовать для выбора порога только на калибровочном наборе, где есть положительные и отрицательные примеры. После выбора порог фиксируется, а качество измеряется на новом holdout наборе. Иначе оценка будет оптимистичной, потому что решение о пороге уже подстроено под те же примеры. Значение TF-IDF сходства не является вероятностью и переносить выбранный порог на другой корпус, язык или версию векторизатора без повторной проверки нельзя. Сейчас реальных threshold метрик нет: нет корпуса и экспертных запросов.')
         add_table(doc,['Слой','Ответственность','Проверка'],[
             ('API','Валидация входа и единый формат ответа','Контракты и коды ошибок'),
             ('Intent model','Классификация запроса','Версия, метрики и fallback'),
@@ -275,7 +286,8 @@ add_table(doc,['Порядок','Работа','Результат','Артеф�
     ('8','Финальная оценка','Official test: 3 080 запросов; Accuracy=0.9010, Macro F1=0.9011; тест не использовался для настройки','experiments/final_model/test_metrics.json, classification_report.csv, confusion_matrix.csv'),
     ('9','HTTP API классификации','Добавлены predict endpoint, валидация, health/readiness и версия модели; HTTP запуск предстоит проверить','src/api/main.py, README.md'),
     ('10','Retrieval baseline','Реализованы проверка корпуса, чанки до 900 символов с перекрытием 120, word TF-IDF поиск и просмотр в Jupyter; метрик пока нет без базы статей','src/rag/retriever.py, notebooks/02_retrieval_exploration.ipynb'),
-    ('11','Оценка поиска','Добавлены проверка JSONL запросов, ранжирование уникальных статей, Recall@5, MRR и учёт запросов без ответа; реальные метрики ожидают экспертной разметки','src/rag/evaluation.py, data/knowledge/README.md')])
+    ('11','Оценка retrieval','Добавлены проверка JSONL запросов, ранжирование уникальных статей, Recall@5, MRR и учёт запросов без ответа; метрики ждут экспертной разметки','src/rag/evaluation.py, data/knowledge/README.md'),
+    ('12','Калибровка отказа','Добавлен перебор порога lexical similarity с coverage и метриками поддержанных ответов; порог калибруется отдельно от финальной проверки','sweep_abstention_thresholds, notebooks/02_retrieval_exploration.ipynb')])
 
 doc.add_heading('Источники данных и публикации',level=1)
 for source in [

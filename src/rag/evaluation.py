@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import Iterable
 
@@ -88,3 +89,64 @@ def evaluate_retrieval(
         'answerable_query_results': answerable_results,
         'unanswerable_policy': 'Не включены в Recall@k и MRR; порог отказа оценивается отдельным экспериментом.',
     }
+
+
+def sweep_abstention_thresholds(
+    retriever: KnowledgeRetriever,
+    examples: Iterable[dict],
+    thresholds: Iterable[float] | None = None,
+) -> list[dict]:
+    examples = list(examples)
+    if not examples:
+        raise ValueError('Для подбора порога нужен хотя бы один запрос.')
+    corpus_ids = {chunk.document_id for chunk in retriever.chunks}
+    judged = []
+    for example in examples:
+        query = example['query']
+        relevant_ids = set(example['relevant_document_ids'])
+        unknown_ids = relevant_ids - corpus_ids
+        if unknown_ids:
+            raise ValueError(f'Для запроса {query!r} релевантные ID отсутствуют в корпусе: {sorted(unknown_ids)}')
+        top_hit = retriever.search(query, top_k=1)[0]
+        judged.append({
+            'is_answerable': bool(relevant_ids),
+            'top_score': top_hit.lexical_similarity,
+            'top_is_relevant': top_hit.document_id in relevant_ids,
+        })
+    if not any(row['is_answerable'] for row in judged):
+        raise ValueError('Нужны запросы с релевантными статьями, чтобы подобрать порог.')
+    if not any(not row['is_answerable'] for row in judged):
+        raise ValueError('Нужны запросы без ответа в корпусе, чтобы оценить отказ.')
+
+    if thresholds is None:
+        score_values = {row['top_score'] for row in judged}
+        thresholds = sorted(score_values | {0.0, math.nextafter(max(score_values), math.inf)})
+    else:
+        thresholds = sorted({float(value) for value in thresholds})
+    if not thresholds or any(not math.isfinite(value) for value in thresholds):
+        raise ValueError('Пороги должны быть конечными числами.')
+
+    answerable_count = sum(row['is_answerable'] for row in judged)
+    unanswerable_count = len(judged) - answerable_count
+    results = []
+    for threshold in thresholds:
+        accepted = [row for row in judged if row['top_score'] >= threshold]
+        correct_supported = [row for row in accepted if row['is_answerable'] and row['top_is_relevant']]
+        false_accepts = [row for row in accepted if not row['is_answerable'] or not row['top_is_relevant']]
+        answer_precision = len(correct_supported) / len(accepted) if accepted else 0.0
+        answer_recall = len(correct_supported) / answerable_count
+        answer_f1 = (
+            2 * answer_precision * answer_recall / (answer_precision + answer_recall)
+            if answer_precision + answer_recall else 0.0
+        )
+        results.append({
+            'threshold': threshold,
+            'accepted_query_count': len(accepted),
+            'coverage': len(accepted) / len(judged),
+            'supported_answer_precision': answer_precision,
+            'supported_answer_recall': answer_recall,
+            'supported_answer_f1': answer_f1,
+            'unsafe_accept_rate': len(false_accepts) / len(accepted) if accepted else 0.0,
+            'unanswerable_false_accept_rate': sum(not row['is_answerable'] for row in accepted) / unanswerable_count,
+        })
+    return results
