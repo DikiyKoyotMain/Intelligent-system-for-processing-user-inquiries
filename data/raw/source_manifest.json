@@ -1,0 +1,13 @@
+{
+  "dataset": "BANKING77",
+  "source": "https://github.com/PolyAI-LDN/task-specific-datasets/tree/master/banking_data",
+  "dataset_card": "https://huggingface.co/datasets/PolyAI/banking77",
+  "license": "CC BY 4.0",
+  "retrieved_date": "2026-11-13",
+  "revision": "upstream master at retrieval time; content pinned by SHA-256",
+  "files": {
+    "train.csv": {"rows_expected": 10003, "bytes": 839073, "sha256": "b06e26ac675513959a63135f11b94ea7786ed02da65db93a5650d8838cbc664b"},
+    "test.csv": {"rows_expected": 3080, "bytes": 239961, "sha256": "d12d6e3bc4c3103966ae786dc435913c0c563dfa328f5a3646d0e62cfeeb474d"}
+  },
+  "attribution": "BANKING77 by PolyAI, CC BY 4.0. Preserve attribution and license link when redistributing data or derivatives."
+}

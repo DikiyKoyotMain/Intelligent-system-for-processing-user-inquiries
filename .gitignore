@@ -9,3 +9,4 @@ outputs/
 Thumbs.db
 data/raw/*
 !data/raw/.gitkeep
+!data/raw/source_manifest.json
