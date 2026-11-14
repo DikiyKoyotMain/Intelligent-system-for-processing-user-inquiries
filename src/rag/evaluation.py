@@ -63,7 +63,7 @@ def evaluate_retrieval(
     for example in examples:
         query = example['query']
         language = example.get('language')
-        language_key = language or 'unspecified'
+        language_key = language.casefold() if language else 'unspecified'
         language_group = language_groups[language_key]
         language_group['query_count'] += 1
         relevant_ids = set(example['relevant_document_ids'])
@@ -128,7 +128,7 @@ def evaluate_retrieval(
 def sweep_abstention_thresholds(
     retriever: KnowledgeRetriever | BM25Retriever,
     examples: Iterable[dict],
-    thresholds: Iterable[float] | None = None,
+    thresholds: Iterable[float] | dict[str, float] | None = None,
 ) -> list[dict]:
     examples = list(examples)
     if not examples:
@@ -151,45 +151,62 @@ def sweep_abstention_thresholds(
             raise ValueError(f'Для запроса {query!r} язык не совпадает с языком релевантных статей: {sorted(language_mismatches)}')
         hits = retriever.search(query, top_k=1, language=language)
         judged.append({
+            'language': language.casefold() if language else 'unspecified',
             'is_answerable': bool(relevant_ids),
             'top_score': hits[0].score if hits else 0.0,
             'top_is_relevant': bool(hits) and hits[0].document_id in relevant_ids,
             'has_candidate': bool(hits),
         })
-    if not any(row['is_answerable'] for row in judged):
-        raise ValueError('Нужны запросы с релевантными статьями, чтобы подобрать порог.')
-    if not any(not row['is_answerable'] for row in judged):
-        raise ValueError('Нужны запросы без ответа в корпусе, чтобы оценить отказ.')
-
-    if thresholds is None:
-        score_values = {row['top_score'] for row in judged}
-        thresholds = sorted(score_values | {0.0, math.nextafter(max(score_values), math.inf)})
-    else:
-        thresholds = sorted({float(value) for value in thresholds})
-    if not thresholds or any(not math.isfinite(value) for value in thresholds):
-        raise ValueError('Пороги должны быть конечными числами.')
-
-    answerable_count = sum(row['is_answerable'] for row in judged)
-    unanswerable_count = len(judged) - answerable_count
+    language_groups = defaultdict(list)
+    for row in judged:
+        language_groups[row['language']].append(row)
     results = []
-    for threshold in thresholds:
-        accepted = [row for row in judged if row['has_candidate'] and row['top_score'] >= threshold]
-        correct_supported = [row for row in accepted if row['is_answerable'] and row['top_is_relevant']]
-        false_accepts = [row for row in accepted if not row['is_answerable'] or not row['top_is_relevant']]
-        answer_precision = len(correct_supported) / len(accepted) if accepted else 0.0
-        answer_recall = len(correct_supported) / answerable_count
-        answer_f1 = (
-            2 * answer_precision * answer_recall / (answer_precision + answer_recall)
-            if answer_precision + answer_recall else 0.0
-        )
-        results.append({
-            'threshold': threshold,
-            'accepted_query_count': len(accepted),
-            'coverage': len(accepted) / len(judged),
-            'supported_answer_precision': answer_precision,
-            'supported_answer_recall': answer_recall,
-            'supported_answer_f1': answer_f1,
-            'unsafe_accept_rate': len(false_accepts) / len(accepted) if accepted else 0.0,
-            'unanswerable_false_accept_rate': sum(not row['is_answerable'] for row in accepted) / unanswerable_count,
-        })
+    if isinstance(thresholds, dict):
+        missing_languages = set(language_groups) - set(thresholds)
+        if missing_languages:
+            raise ValueError(f'Не заданы пороги для языков: {sorted(missing_languages)}')
+    shared_thresholds = None
+    if thresholds is not None and not isinstance(thresholds, dict):
+        shared_thresholds = sorted({float(value) for value in thresholds})
+        if not shared_thresholds or any(not math.isfinite(value) for value in shared_thresholds):
+            raise ValueError('Пороги должны быть конечными числами.')
+
+    for language, group in sorted(language_groups.items()):
+        answerable_count = sum(row['is_answerable'] for row in group)
+        unanswerable_count = len(group) - answerable_count
+        if not answerable_count or not unanswerable_count:
+            raise ValueError(f'Для языка {language!r} нужны answerable и unanswerable запросы.')
+        if isinstance(thresholds, dict):
+            language_thresholds = [float(thresholds[language])]
+        elif shared_thresholds is not None:
+            language_thresholds = shared_thresholds
+        else:
+            score_values = {row['top_score'] for row in group}
+            language_thresholds = sorted(score_values | {0.0, math.nextafter(max(score_values), math.inf)})
+        if any(not math.isfinite(value) for value in language_thresholds):
+            raise ValueError('Пороги должны быть конечными числами.')
+        for threshold in language_thresholds:
+            accepted = [row for row in group if row['has_candidate'] and row['top_score'] >= threshold]
+            correct_supported = [row for row in accepted if row['is_answerable'] and row['top_is_relevant']]
+            false_accepts = [row for row in accepted if not row['is_answerable'] or not row['top_is_relevant']]
+            answer_precision = len(correct_supported) / len(accepted) if accepted else 0.0
+            answer_recall = len(correct_supported) / answerable_count
+            answer_f1 = (
+                2 * answer_precision * answer_recall / (answer_precision + answer_recall)
+                if answer_precision + answer_recall else 0.0
+            )
+            results.append({
+                'language': language,
+                'threshold': threshold,
+                'query_count': len(group),
+                'answerable_query_count': answerable_count,
+                'unanswerable_query_count': unanswerable_count,
+                'accepted_query_count': len(accepted),
+                'coverage': len(accepted) / len(group),
+                'supported_answer_precision': answer_precision,
+                'supported_answer_recall': answer_recall,
+                'supported_answer_f1': answer_f1,
+                'unsafe_accept_rate': len(false_accepts) / len(accepted) if accepted else 0.0,
+                'unanswerable_false_accept_rate': sum(not row['is_answerable'] for row in accepted) / unanswerable_count,
+            })
     return results

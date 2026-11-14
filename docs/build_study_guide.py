@@ -256,14 +256,14 @@ for hit in hits:
         doc.add_paragraph('Проверка качества требует отдельной выборки запросов с экспертно отмеченными relevant_document_ids. Recall@5 усредняет долю релевантных статей, которые попали в первые пять; MRR учитывает позицию первой релевантной статьи. Сравнение lexical baseline, BM25 и эмбеддингов нужно проводить на одних запросах и одних метках. Запросы без ответа в корпусе нужны для определения поведения отказа и передачи оператору. Генерацию подключать после этой проверки; качество retrieval и качество ответа оценивать отдельно.')
         doc.add_paragraph('Оценщик находится в src/rag/evaluation.py. Он проверяет JSONL с запросами, убеждается, что размеченные ID есть в корпусе, ранжирует уникальные документы (несколько совпавших фрагментов одной статьи не занимают несколько мест) и возвращает метрики и результаты по каждому запросу. Recall@5 для одного запроса — число найденных в первых пяти релевантных статей, делённое на полное число релевантных статей; MRR — обратная позиция первой релевантной статьи. Усреднение проводится только по answerable запросам. Запросы с пустым списком статей учитываются отдельно и не включаются в Recall@5/MRR: эти метрики сами по себе не измеряют корректность отказа.')
         doc.add_paragraph('Поле language в строке разметки необязательное, но для корпуса на нескольких языках рекомендуемое. При наличии language поиск фильтрует выдачу по языку, а evaluator проверяет соответствие языка релевантной статьи и считает query_count, answerable/unanswerable, Recall@5 и MRR по каждому языку отдельно. Незаполненный language показывает срез unspecified. Это помогает обнаружить языки, качество которых теряется в общей метрике.')
-        doc.add_paragraph('Пороговая кривая пока объединяет языки для выбранного ранжировщика. Если calibration покажет различия в score и unsafe accept rate, следующий вариант — калибровать пороги отдельно по языку и зафиксировать это правило до holdout; нельзя переносить такую настройку на holdout.')
+        doc.add_paragraph('Для каждого языка calibration должны быть размечены answerable и unanswerable запросы. Функция sweep_abstention_thresholds возвращает независимую кривую и диапазон порогов по каждой языковой группе; это учитывает различия score и unsafe accept rate. Если в языке нет обеих групп, настроить отказ только по этим данным нельзя: оценщик попросит дополнить разметку. Порог также калибруется отдельно для TF-IDF и BM25.')
         add_code_block(doc,'''from src.rag.evaluation import load_queries, evaluate_retrieval
 
 examples = load_queries("data/knowledge/queries_calibration.jsonl")
 metrics = evaluate_retrieval(retriever, examples, k=5)
 print(metrics["recall_at_5"], metrics["mrr"])''')
         doc.add_paragraph('Реализация метрик не означает, что эксперимент уже проведён. Без экспертной разметки нельзя назвать Recall@5 или MRR и сравнить lexical TF-IDF с BM25 или эмбеддингами. Для честного сравнения фиксируйте одну и ту же размеченную выборку; после настройки retrieval подготовьте новый независимый набор для финальной оценки.')
-        doc.add_paragraph('Для этого в проекте выделены queries_calibration.jsonl и queries_holdout.jsonl. Calibration содержит разнообразные запросы с ответом и без него; на нём выбираются ранжировщик и порог отказа. Holdout размечается заранее, но его метрики скрыты до фиксации решения. В notebooks/02_retrieval_exploration.ipynb методы сравниваются только на calibration. Разработчик вручную переносит выбранный порог в SELECTED_THRESHOLD и имя метода в SELECTED_METHOD; следующая ячейка выводит финальные Recall@5/MRR и показатели отказа на holdout один раз.')
+        doc.add_paragraph('Для этого в проекте выделены queries_calibration.jsonl и queries_holdout.jsonl. Calibration содержит разнообразные запросы с ответом и без него в каждой языковой группе; на нём выбираются ранжировщик, параметры BM25 и отдельный порог для каждого языка. Holdout размечается заранее, но его метрики скрыты до фиксации решения. В notebooks/02_retrieval_exploration.ipynb методы сравниваются только на calibration. Разработчик вручную переносит метод в SELECTED_METHOD, параметры BM25 в соответствующие переменные, а выбранный порог для каждого языка — в SELECTED_THRESHOLDS; следующая ячейка выводит финальные метрики на holdout один раз.')
         add_code_block(doc,'''from src.rag.evaluation import evaluate_retrieval
 
 bm25_candidate = bm25_retriever.with_parameters(k1=1.2, b=0.75)
@@ -277,9 +277,15 @@ import pandas as pd
 threshold_results = sweep_abstention_thresholds(retriever, examples)
 threshold_table = pd.DataFrame(threshold_results)
 threshold_table.sort_values(
-    ["supported_answer_f1", "coverage"], ascending=False
-).head(10)''')
+    ["language", "supported_answer_f1", "coverage"],
+    ascending=[True, False, False],
+).groupby("language").head(10)''')
         doc.add_paragraph('Набор queries_calibration.jsonl используется для сравнения ранжировщиков и выбора порога, а queries_holdout.jsonl — только для финальной оценки уже выбранного варианта. После просмотра holdout не меняйте метод и порог по его метрикам. Иначе оценка будет оптимистичной. Score любого ранжировщика не является вероятностью; выбранный порог нельзя переносить на другой корпус или модель без повторной калибровки. Сейчас реальных threshold метрик нет: нет корпуса и экспертных запросов.')
+        add_code_block(doc,'''holdout_results = sweep_abstention_thresholds(
+    selected_retriever,
+    holdout_examples,
+    thresholds=SELECTED_THRESHOLDS,
+)''')
         add_table(doc,['Слой','Ответственность','Проверка'],[
             ('API','Валидация входа и единый формат ответа','Контракты и коды ошибок'),
             ('Intent model','Классификация запроса','Версия, метрики и fallback'),
@@ -330,7 +336,8 @@ add_table(doc,['Порядок','Работа','Результат','Артеф�
     ('17','Протокол калибровки и holdout','Файлы запросов разделены на calibration и финальный holdout; методы/порог выбираются только на первой выборке, финальные метрики считаются после фиксации решения','data/knowledge/queries_calibration.jsonl, queries_holdout.jsonl, notebooks/02_retrieval_exploration.ipynb'),
     ('18','Защита holdout от утечки','Ноутбук не сравнивает TF-IDF/BM25 на holdout и просит вручную зафиксировать метод/порог; финальная оценка запускается только после этого','notebooks/02_retrieval_exploration.ipynb, reports/research.md'),
     ('19','Настройка параметров BM25','Добавлен небольшой перебор k1/b на calibration; индекс переиспользуется, holdout остаётся только для оценки зафиксированного решения','BM25Retriever.with_parameters, notebooks/02_retrieval_exploration.ipynb'),
-    ('20','Метрики по языкам','Добавлено поле language в разметку, фильтрация выдачи по языку и отдельный Recall@5/MRR breakdown; для unanswerable языковых групп ranking метрики отмечаются как недоступные','src/rag/evaluation.py, notebooks/02_retrieval_exploration.ipynb')])
+    ('20','Метрики по языкам','Добавлено поле language в разметку, фильтрация выдачи по языку и отдельный Recall@5/MRR breakdown; для unanswerable языковых групп ranking метрики отмечаются как недоступные','src/rag/evaluation.py, notebooks/02_retrieval_exploration.ipynb'),
+    ('21','Языковые пороги отказа','Пороговые кривые строятся отдельно по языку, методам и параметрам; holdout проверяет фиксированный словарь порогов','sweep_abstention_thresholds, SELECTED_THRESHOLDS, notebooks/02_retrieval_exploration.ipynb')])
 
 doc.add_heading('Источники данных и публикации',level=1)
 for source in [
