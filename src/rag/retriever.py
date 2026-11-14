@@ -191,6 +191,22 @@ class BM25Retriever:
         chunks = make_chunks(documents, max_chars=max_chars, overlap_chars=overlap_chars)
         return cls(chunks, **kwargs)
 
+    def with_parameters(self, k1: float, b: float) -> BM25Retriever:
+        if k1 <= 0:
+            raise ValueError('k1 должен быть положительным.')
+        if not 0 <= b <= 1:
+            raise ValueError('b должен находиться в диапазоне от 0 до 1.')
+        candidate = object.__new__(BM25Retriever)
+        candidate.chunks = self.chunks
+        candidate.vectorizer = self.vectorizer
+        candidate.matrix = self.matrix
+        candidate.document_lengths = self.document_lengths
+        candidate.average_document_length = self.average_document_length
+        candidate.inverse_document_frequency = self.inverse_document_frequency
+        candidate.k1 = float(k1)
+        candidate.b = float(b)
+        return candidate
+
     def search(self, query: str, top_k: int = 5, language: str | None = None) -> list[RetrievalHit]:
         if not isinstance(query, str) or not query.strip():
             raise ValueError('Поисковый запрос не должен быть пустым.')
