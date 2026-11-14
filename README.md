@@ -38,7 +38,9 @@ API не возвращает confidence: используемый Linear SVM н
 
 ## База знаний и поиск статей
 
-Подготовьте одобренный корпус в `data/knowledge/articles.jsonl`: одна статья JSON на строку, с полями `id`, `title`, `content`, `source`, `updated_at`, `language`. Формат, правила подготовки и пример поиска описаны в `data/knowledge/README.md`. В проекте пока нет статей: BANKING77 содержит обращения и метки намерений, а не проверенные ответы.
+Подготовьте одобренный корпус в `data/knowledge/articles.jsonl`: одна статья JSON на строку, с полями `id`, `title`, `content`, `source`, `updated_at`, `language`, `owner`, `license`, `status`. `updated_at` задаётся в формате `YYYY-MM-DD`, `status` должен быть `approved`. Полный контракт и пример описаны в `data/knowledge/README.md`. В проекте пока нет статей: BANKING77 содержит обращения и метки намерений, а не проверенные ответы.
+
+Перед индексацией запустите аудит: `python -m src.rag.audit --input data/knowledge/articles.jsonl --output reports/knowledge_audit.json`. Для интерактивного просмотра откройте `notebooks/04_knowledge_audit.ipynb` в PyCharm. Отчёт показывает сводку по языкам, владельцам, лицензиям, дубликатам и документам, которым нужна ручная проверка актуальности.
 
 `src/rag/retriever.py` проверяет документы, делит текст на фрагменты с перекрытием и ищет их по word TF-IDF. Поиск можно посмотреть из Python после добавления корпуса:
 
@@ -69,7 +71,10 @@ for hit in hits:
 - `src/models/` — baseline и дальнейшие модели.
 - `src/api/` — HTTP API для intent classification.
 - `src/rag/` — подготовка фрагментов и базовый lexical retrieval для одобренных статей.
+- `src/rag/audit.py` — валидация статей и отчёт по метаданным, дубликатам и срокам ручного пересмотра.
 - `data/knowledge/` — формат и инструкции для корпуса поддержки; сами статьи пока не добавлены.
+- `notebooks/03_api_search.ipynb` — ручной вызов поискового HTTP API.
+- `notebooks/04_knowledge_audit.ipynb` — интерактивный аудит базы знаний.
 - `configs/` — параметры split, baseline и зафиксированного кандидата.
 - `experiments/baseline/` — конфигурация, метрики и диагностика ошибок.
 - `reports/` — исследование и объяснение результатов.

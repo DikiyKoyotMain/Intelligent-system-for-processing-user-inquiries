@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Iterable
 
@@ -62,7 +63,7 @@ def load_documents(path: Path) -> list[dict]:
         raise FileNotFoundError(f'Файл базы знаний не найден: {path}')
     documents = []
     seen_ids = set()
-    required = ('id', 'title', 'content', 'source', 'updated_at', 'language')
+    required = ('id', 'title', 'content', 'source', 'updated_at', 'language', 'owner', 'license', 'status')
     with path.open(encoding='utf-8') as stream:
         for line_number, line in enumerate(stream, start=1):
             if not line.strip():
@@ -76,6 +77,14 @@ def load_documents(path: Path) -> list[dict]:
             missing = [field for field in required if not isinstance(item.get(field), str) or not item[field].strip()]
             if missing:
                 raise ValueError(f'В строке {line_number} отсутствуют текстовые поля: {missing}.')
+            if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', item['updated_at']):
+                raise ValueError(f'В строке {line_number} updated_at должен иметь формат YYYY-MM-DD.')
+            try:
+                date.fromisoformat(item['updated_at'])
+            except ValueError as exc:
+                raise ValueError(f'В строке {line_number} указана некорректная дата updated_at.') from exc
+            if item['status'].casefold() != 'approved':
+                raise ValueError(f'В строке {line_number} индексируются только документы со status="approved".')
             if item['id'] in seen_ids:
                 raise ValueError(f"Повторяется id документа {item['id']!r}.")
             seen_ids.add(item['id'])
