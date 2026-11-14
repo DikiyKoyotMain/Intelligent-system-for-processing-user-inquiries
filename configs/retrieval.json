@@ -9,5 +9,6 @@
     "b": 0.75
   },
   "thresholds_by_language": {},
-  "selection_status": "baseline_uncalibrated"
+  "selection_status": "baseline_uncalibrated",
+  "calibration_manifest": null
 }

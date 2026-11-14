@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import math
 import os
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
@@ -83,7 +85,7 @@ class KnowledgeSearchHit(BaseModel):
 class KnowledgeSearchResponse(BaseModel):
     request_id: str
     retriever: str
-    retrieval_status: Literal['threshold_not_configured', 'threshold_passed', 'threshold_not_met', 'no_candidates']
+    retrieval_status: Literal['threshold_not_configured', 'threshold_passed', 'threshold_not_met', 'no_candidates', 'calibration_mismatch']
     threshold: float | None = None
     hits: list[KnowledgeSearchHit]
 
@@ -96,6 +98,7 @@ class HealthResponse(BaseModel):
 class KnowledgeHealthResponse(BaseModel):
     status: str
     retriever: str | None = None
+    threshold_status: str
 
 
 def read_model_config() -> dict:
@@ -125,7 +128,7 @@ def load_model() -> tuple[object | None, str]:
     return model, config['name']
 
 
-def read_retrieval_config() -> tuple[dict, dict[str, float]]:
+def read_retrieval_config() -> tuple[dict, dict[str, float], dict | None]:
     config = json.loads(RETRIEVAL_CONFIG_PATH.read_text(encoding='utf-8'))
     if not isinstance(config, dict):
         raise ValueError('configs/retrieval.json должен содержать JSON-объект.')
@@ -173,19 +176,35 @@ def read_retrieval_config() -> tuple[dict, dict[str, float]]:
         raise ValueError('selection_status должен быть baseline_uncalibrated или calibrated.')
     if thresholds and selection_status != 'calibrated':
         raise ValueError('Пороги разрешены только после selection_status=calibrated.')
-    return config, thresholds
+    manifest = config.get('calibration_manifest')
+    if thresholds:
+        if not isinstance(manifest, dict):
+            raise ValueError('Калиброванные пороги требуют calibration_manifest.')
+        required_hashes = ('corpus_sha256', 'calibration_queries_sha256')
+        for key in required_hashes:
+            if not isinstance(manifest.get(key), str) or not re.fullmatch(r'[0-9a-f]{64}', manifest[key]):
+                raise ValueError(f'calibration_manifest требует SHA-256 поле {key}.')
+        if manifest.get('method') not in {'tfidf', 'bm25'}:
+            raise ValueError('calibration_manifest.method должен быть tfidf или bm25.')
+        if not isinstance(manifest.get('chunking'), dict) or not isinstance(manifest.get('bm25'), dict):
+            raise ValueError('calibration_manifest должен фиксировать chunking и параметры BM25.')
+    elif manifest is not None and not isinstance(manifest, dict):
+        raise ValueError('calibration_manifest должен быть JSON-объектом или null.')
+    return config, thresholds, manifest
 
 
-def load_knowledge_retriever() -> tuple[KnowledgeRetriever | BM25Retriever | None, str, dict[str, float]]:
+def load_knowledge_retriever() -> tuple[KnowledgeRetriever | BM25Retriever | None, str, dict[str, float], str]:
     try:
-        config, thresholds = read_retrieval_config()
+        config, thresholds, manifest = read_retrieval_config()
     except (FileNotFoundError, json.JSONDecodeError, ValueError):
         logger.exception('Knowledge retrieval configuration is unavailable or invalid.')
-        return None, 'unavailable', {}
+        return None, 'unavailable', {}, 'index_unavailable'
     algorithm = os.environ.get('KNOWLEDGE_RETRIEVER', config['method']).strip().casefold()
+    threshold_status = 'calibrated' if thresholds else 'threshold_not_configured'
     if algorithm != config['method'] and thresholds:
         logger.warning('Calibrated thresholds disabled because the retriever was overridden by the environment.')
         thresholds = {}
+        threshold_status = 'calibration_mismatch'
     chunking = config['chunking']
     bm25 = config['bm25']
     corpus_path = Path(os.environ.get('KNOWLEDGE_ARTICLES_PATH', str(ROOT / 'data' / 'knowledge' / 'articles.jsonl')))
@@ -211,14 +230,33 @@ def load_knowledge_retriever() -> tuple[KnowledgeRetriever | BM25Retriever | Non
             retriever_name = f"bm25_k1_{bm25['k1']}_b_{bm25['b']}"
         else:
             logger.error('Unknown knowledge retriever configured: %s', algorithm)
-            return None, algorithm, {}
+            return None, algorithm, {}, 'index_unavailable'
     except (FileNotFoundError, ValueError):
         logger.warning('Knowledge index is unavailable; knowledge search readiness will remain false.')
-        return None, retriever_name, {}
+        return None, retriever_name, {}, 'index_unavailable'
     except Exception:
         logger.exception('Knowledge index could not be loaded.')
-        return None, retriever_name, {}
-    return retriever, retriever_name, thresholds
+        return None, retriever_name, {}, 'index_unavailable'
+    if thresholds and manifest is not None:
+        try:
+            corpus_sha256 = hashlib.sha256(corpus_path.read_bytes()).hexdigest()
+        except OSError:
+            corpus_sha256 = None
+        expected_fingerprint = {
+            'method': algorithm,
+            'chunking': chunking,
+            'bm25': {'k1': bm25['k1'], 'b': bm25['b']},
+        }
+        manifest_fingerprint = {
+            'method': manifest.get('method'),
+            'chunking': manifest.get('chunking'),
+            'bm25': manifest.get('bm25'),
+        }
+        if corpus_sha256 != manifest['corpus_sha256'] or manifest_fingerprint != expected_fingerprint:
+            logger.warning('Calibrated thresholds do not match the loaded corpus or retrieval configuration.')
+            thresholds = {}
+            threshold_status = 'calibration_mismatch'
+    return retriever, retriever_name, thresholds, threshold_status
 
 
 @asynccontextmanager
@@ -228,11 +266,13 @@ async def lifespan(app: FastAPI):
         app.state.knowledge_retriever,
         app.state.knowledge_retriever_name,
         app.state.knowledge_thresholds,
+        app.state.knowledge_threshold_status,
     ) = load_knowledge_retriever()
     yield
     app.state.model = None
     app.state.knowledge_retriever = None
     app.state.knowledge_thresholds = {}
+    app.state.knowledge_threshold_status = 'index_unavailable'
 
 
 app = FastAPI(
@@ -259,7 +299,11 @@ def readiness(request: Request) -> HealthResponse:
 def knowledge_readiness(request: Request) -> KnowledgeHealthResponse:
     if request.app.state.knowledge_retriever is None:
         raise HTTPException(status_code=503, detail='Индекс базы знаний недоступен.')
-    return KnowledgeHealthResponse(status='ready', retriever=request.app.state.knowledge_retriever_name)
+    return KnowledgeHealthResponse(
+        status='ready',
+        retriever=request.app.state.knowledge_retriever_name,
+        threshold_status=request.app.state.knowledge_threshold_status,
+    )
 
 
 @app.post('/v1/classify', response_model=ClassificationResponse, tags=['classification'])
@@ -301,6 +345,8 @@ def search_knowledge(payload: KnowledgeSearchRequest, request: Request) -> Knowl
     threshold = thresholds.get(payload.language.casefold()) if payload.language else None
     if not hits:
         retrieval_status = 'no_candidates'
+    elif request.app.state.knowledge_threshold_status == 'calibration_mismatch':
+        retrieval_status = 'calibration_mismatch'
     elif threshold is None:
         retrieval_status = 'threshold_not_configured'
     elif hits[0].score >= threshold:
