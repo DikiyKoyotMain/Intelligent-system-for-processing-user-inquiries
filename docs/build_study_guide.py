@@ -277,6 +277,7 @@ metrics = evaluate_retrieval(retriever, examples, k=5)
 print(metrics["recall_at_5"], metrics["mrr"])''')
         doc.add_paragraph('Реализация метрик не означает, что эксперимент уже проведён. Без экспертной разметки нельзя назвать Recall@5 или MRR и сравнить lexical TF-IDF с BM25 или эмбеддингами. Для честного сравнения фиксируйте одну и ту же размеченную выборку; после настройки retrieval подготовьте новый независимый набор для финальной оценки.')
         doc.add_paragraph('Для этого в проекте выделены queries_calibration.jsonl и queries_holdout.jsonl. Calibration содержит разнообразные запросы с ответом и без него в каждой языковой группе; на нём выбираются ранжировщик, параметры BM25 и отдельный порог для каждого языка. Holdout размечается заранее, но его метрики скрыты до фиксации решения. В notebooks/02_retrieval_exploration.ipynb методы сравниваются только на calibration. Разработчик вручную переносит метод в SELECTED_METHOD, параметры BM25 в соответствующие переменные, а выбранный порог для каждого языка — в SELECTED_THRESHOLDS; следующая ячейка выводит финальные метрики на holdout один раз.')
+        doc.add_paragraph('До сравнения методов функция audit_query_splits проверяет нормализованные дубли внутри выборок, точные повторы между ними, конфликты разметки и пересечение query_group_id. Для парафраз вручную укажите общий query_group_id в строках JSONL: все варианты группы должны оставаться в одной части. Preflight показывает только агрегированные счётчики и останавливает оценку при утечке. Нормализация Unicode, регистра, пробелов и пунктуации ловит буквальные варианты, но не заменяет ручную группировку семантически похожих обращений.')
         add_code_block(doc,'''from src.rag.evaluation import evaluate_retrieval
 
 bm25_candidate = bm25_retriever.with_parameters(k1=1.2, b=0.75)
@@ -355,7 +356,8 @@ add_table(doc,['Порядок','Работа','Результат','Артеф�
     ('23','Защита калибровки от изменений','Кандидат конфигурации сохраняет SHA-256 корпуса и наборов разметки; API отключает порог, если корпус, ранжировщик или параметры разбиения изменились','notebooks/02_retrieval_exploration.ipynb, configs/retrieval.json, src/api/main.py'),
     ('24','Разбор поисковых ошибок','К результатам добавлены ранг релевантной статьи, top-1 и пропущенные ID; ноутбук показывает отдельную таблицу ошибок на calibration для ручного разбора','src/rag/evaluation.py, notebooks/02_retrieval_exploration.ipynb'),
     ('25','Сохранение запусков retrieval','После holdout локально сохраняются параметры, версии библиотек, хеши данных, метрики и CSV ошибок; каталог work исключён из Git','notebooks/02_retrieval_exploration.ipynb, reports/README.md, .gitignore'),
-    ('26','Просмотр истории retrieval-экспериментов','Добавлен ноутбук для группировки запусков по хешам корпуса и calibration, просмотра настроек и CSV ошибок без повторного индексирования','notebooks/05_retrieval_run_review.ipynb, reports/README.md')])
+    ('26','Просмотр истории retrieval-экспериментов','Добавлен ноутбук для группировки запусков по хешам корпуса и calibration, просмотра настроек и CSV ошибок без повторного индексирования','notebooks/05_retrieval_run_review.ipynb, reports/README.md'),
+    ('27','Аудит утечки retrieval-выборок','До оценки считаются дубли, нормализованные совпадения запросов и пересечение query_group_id; при утечке ноутбук останавливает сравнение','audit_query_splits, data/knowledge/README.md, notebooks/02_retrieval_exploration.ipynb')])
 
 doc.add_heading('Источники данных и публикации',level=1)
 for source in [
