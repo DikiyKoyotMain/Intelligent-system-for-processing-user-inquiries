@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+from collections import defaultdict
 from pathlib import Path
 from typing import Iterable
 
@@ -31,7 +32,13 @@ def load_queries(path: str | Path) -> list[dict]:
                 raise ValueError(f'В строке {line_number} поле relevant_document_ids должно быть списком ID.')
             if len(relevant_ids) != len(set(relevant_ids)):
                 raise ValueError(f'В строке {line_number} повторяются relevant_document_ids.')
-            examples.append({'query': query.strip(), 'relevant_document_ids': relevant_ids})
+            language = item.get('language')
+            if language is not None and (not isinstance(language, str) or not language.strip()):
+                raise ValueError(f'В строке {line_number} поле language должно быть непустой строкой, если оно задано.')
+            example = {'query': query.strip(), 'relevant_document_ids': relevant_ids}
+            if language is not None:
+                example['language'] = language.strip()
+            examples.append(example)
     if not examples:
         raise ValueError('Файл запросов пуст.')
     return examples
@@ -49,19 +56,32 @@ def evaluate_retrieval(
         raise ValueError('Для оценки нужен хотя бы один запрос.')
 
     corpus_ids = {chunk.document_id for chunk in retriever.chunks}
+    corpus_languages = {chunk.document_id: chunk.language for chunk in retriever.chunks}
     answerable_results = []
     unanswerable_count = 0
+    language_groups = defaultdict(lambda: {'query_count': 0, 'answerable': [], 'unanswerable_query_count': 0})
     for example in examples:
         query = example['query']
+        language = example.get('language')
+        language_key = language or 'unspecified'
+        language_group = language_groups[language_key]
+        language_group['query_count'] += 1
         relevant_ids = set(example['relevant_document_ids'])
         unknown_ids = relevant_ids - corpus_ids
         if unknown_ids:
             raise ValueError(f'Для запроса {query!r} релевантные ID отсутствуют в корпусе: {sorted(unknown_ids)}')
+        language_mismatches = [
+            doc_id for doc_id in relevant_ids
+            if language and corpus_languages[doc_id].casefold() != language.casefold()
+        ]
+        if language_mismatches:
+            raise ValueError(f'Для запроса {query!r} язык не совпадает с языком релевантных статей: {sorted(language_mismatches)}')
         if not relevant_ids:
             unanswerable_count += 1
+            language_group['unanswerable_query_count'] += 1
             continue
 
-        hits = retriever.search(query, top_k=len(retriever.chunks))
+        hits = retriever.search(query, top_k=len(retriever.chunks), language=language)
         ranked_ids = []
         seen_ids = set()
         for hit in hits:
@@ -70,22 +90,36 @@ def evaluate_retrieval(
                 seen_ids.add(hit.document_id)
         top_ids = ranked_ids[:k]
         relevant_rank = next((rank for rank, doc_id in enumerate(ranked_ids, start=1) if doc_id in relevant_ids), None)
-        answerable_results.append({
+        row = {
             'query': query,
+            'language': language,
             'relevant_document_ids': sorted(relevant_ids),
             'retrieved_document_ids_at_k': top_ids,
             'recall_at_k': len(relevant_ids.intersection(top_ids)) / len(relevant_ids),
             'reciprocal_rank': 1.0 / relevant_rank if relevant_rank else 0.0,
-        })
+        }
+        answerable_results.append(row)
+        language_group['answerable'].append(row)
 
     if not answerable_results:
         raise ValueError('Нет запросов с релевантными статьями: Recall@k и MRR вычислить нельзя.')
+    language_metrics = {}
+    for language_key, group in sorted(language_groups.items()):
+        rows = group['answerable']
+        language_metrics[language_key] = {
+            'query_count': group['query_count'],
+            'answerable_query_count': len(rows),
+            'unanswerable_query_count': group['unanswerable_query_count'],
+            f'recall_at_{k}': sum(row['recall_at_k'] for row in rows) / len(rows) if rows else None,
+            'mrr': sum(row['reciprocal_rank'] for row in rows) / len(rows) if rows else None,
+        }
     return {
         'query_count': len(examples),
         'answerable_query_count': len(answerable_results),
         'unanswerable_query_count': unanswerable_count,
         f'recall_at_{k}': sum(row['recall_at_k'] for row in answerable_results) / len(answerable_results),
         'mrr': sum(row['reciprocal_rank'] for row in answerable_results) / len(answerable_results),
+        'language_metrics': language_metrics,
         'answerable_query_results': answerable_results,
         'unanswerable_policy': 'Не включены в Recall@k и MRR; порог отказа оценивается отдельным экспериментом.',
     }
@@ -100,18 +134,27 @@ def sweep_abstention_thresholds(
     if not examples:
         raise ValueError('Для подбора порога нужен хотя бы один запрос.')
     corpus_ids = {chunk.document_id for chunk in retriever.chunks}
+    corpus_languages = {chunk.document_id: chunk.language for chunk in retriever.chunks}
     judged = []
     for example in examples:
         query = example['query']
+        language = example.get('language')
         relevant_ids = set(example['relevant_document_ids'])
         unknown_ids = relevant_ids - corpus_ids
         if unknown_ids:
             raise ValueError(f'Для запроса {query!r} релевантные ID отсутствуют в корпусе: {sorted(unknown_ids)}')
-        top_hit = retriever.search(query, top_k=1)[0]
+        language_mismatches = [
+            doc_id for doc_id in relevant_ids
+            if language and corpus_languages[doc_id].casefold() != language.casefold()
+        ]
+        if language_mismatches:
+            raise ValueError(f'Для запроса {query!r} язык не совпадает с языком релевантных статей: {sorted(language_mismatches)}')
+        hits = retriever.search(query, top_k=1, language=language)
         judged.append({
             'is_answerable': bool(relevant_ids),
-            'top_score': top_hit.score,
-            'top_is_relevant': top_hit.document_id in relevant_ids,
+            'top_score': hits[0].score if hits else 0.0,
+            'top_is_relevant': bool(hits) and hits[0].document_id in relevant_ids,
+            'has_candidate': bool(hits),
         })
     if not any(row['is_answerable'] for row in judged):
         raise ValueError('Нужны запросы с релевантными статьями, чтобы подобрать порог.')
@@ -130,7 +173,7 @@ def sweep_abstention_thresholds(
     unanswerable_count = len(judged) - answerable_count
     results = []
     for threshold in thresholds:
-        accepted = [row for row in judged if row['top_score'] >= threshold]
+        accepted = [row for row in judged if row['has_candidate'] and row['top_score'] >= threshold]
         correct_supported = [row for row in accepted if row['is_answerable'] and row['top_is_relevant']]
         false_accepts = [row for row in accepted if not row['is_answerable'] or not row['top_is_relevant']]
         answer_precision = len(correct_supported) / len(accepted) if accepted else 0.0
