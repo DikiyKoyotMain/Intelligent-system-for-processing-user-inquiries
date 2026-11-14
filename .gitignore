@@ -15,7 +15,7 @@ work/
 data/processed/*
 !data/processed/.gitkeep
 data/knowledge/articles.jsonl
-data/knowledge/queries.jsonl
+data/knowledge/queries*.jsonl
 reports/knowledge_audit.json
 mlflow.db*
 mlartifacts/
