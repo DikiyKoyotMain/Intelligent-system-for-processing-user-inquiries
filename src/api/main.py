@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -16,6 +17,7 @@ from src.rag.retriever import BM25Retriever, KnowledgeRetriever
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = ROOT / 'configs' / 'final_model.json'
+RETRIEVAL_CONFIG_PATH = ROOT / 'configs' / 'retrieval.json'
 logger = logging.getLogger('support_intelligence.api')
 
 
@@ -56,6 +58,15 @@ class KnowledgeSearchRequest(BaseModel):
                 raise ValueError('Поисковый запрос не должен быть пустым.')
         return value
 
+    @field_validator('language', mode='before')
+    @classmethod
+    def normalize_language(cls, value: object) -> object:
+        if isinstance(value, str):
+            value = value.strip().casefold()
+            if not value:
+                raise ValueError('language не должен быть пустым.')
+        return value
+
 
 class KnowledgeSearchHit(BaseModel):
     document_id: str
@@ -72,6 +83,8 @@ class KnowledgeSearchHit(BaseModel):
 class KnowledgeSearchResponse(BaseModel):
     request_id: str
     retriever: str
+    retrieval_status: Literal['threshold_not_configured', 'threshold_passed', 'threshold_not_met', 'no_candidates']
+    threshold: float | None = None
     hits: list[KnowledgeSearchHit]
 
 
@@ -112,38 +125,114 @@ def load_model() -> tuple[object | None, str]:
     return model, config['name']
 
 
-def load_knowledge_retriever() -> tuple[KnowledgeRetriever | BM25Retriever | None, str]:
-    algorithm = os.environ.get('KNOWLEDGE_RETRIEVER', 'tfidf').strip().casefold()
+def read_retrieval_config() -> tuple[dict, dict[str, float]]:
+    config = json.loads(RETRIEVAL_CONFIG_PATH.read_text(encoding='utf-8'))
+    if not isinstance(config, dict):
+        raise ValueError('configs/retrieval.json должен содержать JSON-объект.')
+    algorithm = config.get('method')
+    if algorithm not in {'tfidf', 'bm25'}:
+        raise ValueError('method в configs/retrieval.json должен быть tfidf или bm25.')
+    chunking = config.get('chunking', {})
+    if not isinstance(chunking, dict):
+        raise ValueError('chunking должен быть JSON-объектом.')
+    max_chars = chunking.get('max_chars')
+    overlap_chars = chunking.get('overlap_chars')
+    if isinstance(max_chars, bool) or isinstance(overlap_chars, bool) or not isinstance(max_chars, int) or not isinstance(overlap_chars, int):
+        raise ValueError('chunking требует целочисленные max_chars и overlap_chars.')
+    if max_chars < 1 or overlap_chars < 0 or overlap_chars >= max_chars:
+        raise ValueError('Некорректные параметры chunking.')
+    bm25 = config.get('bm25', {})
+    if not isinstance(bm25, dict):
+        raise ValueError('bm25 должен быть JSON-объектом.')
+    try:
+        k1 = float(bm25['k1'])
+        b = float(bm25['b'])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError('bm25 требует числовые параметры k1 и b.') from exc
+    if not math.isfinite(k1) or k1 <= 0 or not math.isfinite(b) or not 0 <= b <= 1:
+        raise ValueError('Некорректные параметры BM25.')
+    raw_thresholds = config.get('thresholds_by_language', {})
+    if not isinstance(raw_thresholds, dict):
+        raise ValueError('thresholds_by_language должен быть JSON-объектом.')
+    thresholds = {}
+    for language, value in raw_thresholds.items():
+        if not isinstance(language, str) or not language.strip() or isinstance(value, bool):
+            raise ValueError('Порог должен иметь непустой язык и числовое значение.')
+        try:
+            threshold = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f'Некорректный порог для языка {language!r}.') from exc
+        if not math.isfinite(threshold):
+            raise ValueError(f'Порог для языка {language!r} должен быть конечным числом.')
+        normalized_language = language.strip().casefold()
+        if normalized_language in thresholds:
+            raise ValueError(f'Язык {normalized_language!r} указан в порогах несколько раз.')
+        thresholds[normalized_language] = threshold
+    selection_status = config.get('selection_status')
+    if selection_status not in {'baseline_uncalibrated', 'calibrated'}:
+        raise ValueError('selection_status должен быть baseline_uncalibrated или calibrated.')
+    if thresholds and selection_status != 'calibrated':
+        raise ValueError('Пороги разрешены только после selection_status=calibrated.')
+    return config, thresholds
+
+
+def load_knowledge_retriever() -> tuple[KnowledgeRetriever | BM25Retriever | None, str, dict[str, float]]:
+    try:
+        config, thresholds = read_retrieval_config()
+    except (FileNotFoundError, json.JSONDecodeError, ValueError):
+        logger.exception('Knowledge retrieval configuration is unavailable or invalid.')
+        return None, 'unavailable', {}
+    algorithm = os.environ.get('KNOWLEDGE_RETRIEVER', config['method']).strip().casefold()
+    if algorithm != config['method'] and thresholds:
+        logger.warning('Calibrated thresholds disabled because the retriever was overridden by the environment.')
+        thresholds = {}
+    chunking = config['chunking']
+    bm25 = config['bm25']
     corpus_path = Path(os.environ.get('KNOWLEDGE_ARTICLES_PATH', str(ROOT / 'data' / 'knowledge' / 'articles.jsonl')))
     if not corpus_path.is_absolute():
         corpus_path = ROOT / corpus_path
     retriever_name = algorithm
     try:
         if algorithm == 'tfidf':
-            retriever = KnowledgeRetriever.from_jsonl(corpus_path)
+            retriever = KnowledgeRetriever.from_jsonl(
+                corpus_path,
+                max_chars=chunking['max_chars'],
+                overlap_chars=chunking['overlap_chars'],
+            )
             retriever_name = 'tfidf_word_bigram'
         elif algorithm == 'bm25':
-            retriever = BM25Retriever.from_jsonl(corpus_path)
-            retriever_name = 'bm25_k1_1.5_b_0.75'
+            retriever = BM25Retriever.from_jsonl(
+                corpus_path,
+                max_chars=chunking['max_chars'],
+                overlap_chars=chunking['overlap_chars'],
+                k1=bm25['k1'],
+                b=bm25['b'],
+            )
+            retriever_name = f"bm25_k1_{bm25['k1']}_b_{bm25['b']}"
         else:
             logger.error('Unknown knowledge retriever configured: %s', algorithm)
-            return None, algorithm
+            return None, algorithm, {}
     except (FileNotFoundError, ValueError):
         logger.warning('Knowledge index is unavailable; knowledge search readiness will remain false.')
-        return None, retriever_name
+        return None, retriever_name, {}
     except Exception:
         logger.exception('Knowledge index could not be loaded.')
-        return None, retriever_name
-    return retriever, retriever_name
+        return None, retriever_name, {}
+    return retriever, retriever_name, thresholds
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.model, app.state.model_version = load_model()
-    app.state.knowledge_retriever, app.state.knowledge_retriever_name = load_knowledge_retriever()
+    (
+        app.state.knowledge_retriever,
+        app.state.knowledge_retriever_name,
+        app.state.knowledge_thresholds,
+    ) = load_knowledge_retriever()
     yield
     app.state.model = None
     app.state.knowledge_retriever = None
+    app.state.knowledge_thresholds = {}
 
 
 app = FastAPI(
@@ -208,8 +297,20 @@ def search_knowledge(payload: KnowledgeSearchRequest, request: Request) -> Knowl
             status_code=500,
             detail={'message': 'Не удалось выполнить поиск по базе знаний.', 'request_id': request_id},
         ) from exc
+    thresholds = request.app.state.knowledge_thresholds
+    threshold = thresholds.get(payload.language.casefold()) if payload.language else None
+    if not hits:
+        retrieval_status = 'no_candidates'
+    elif threshold is None:
+        retrieval_status = 'threshold_not_configured'
+    elif hits[0].score >= threshold:
+        retrieval_status = 'threshold_passed'
+    else:
+        retrieval_status = 'threshold_not_met'
     return KnowledgeSearchResponse(
         request_id=request_id,
         retriever=request.app.state.knowledge_retriever_name,
+        retrieval_status=retrieval_status,
+        threshold=threshold,
         hits=[KnowledgeSearchHit(**hit.__dict__) for hit in hits],
     )

@@ -1,0 +1,13 @@
+{
+  "method": "tfidf",
+  "chunking": {
+    "max_chars": 900,
+    "overlap_chars": 120
+  },
+  "bm25": {
+    "k1": 1.5,
+    "b": 0.75
+  },
+  "thresholds_by_language": {},
+  "selection_status": "baseline_uncalibrated"
+}
