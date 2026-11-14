@@ -83,18 +83,26 @@ def evaluate_retrieval(
 
         hits = retriever.search(query, top_k=len(retriever.chunks), language=language)
         ranked_ids = []
+        ranked_hits = []
         seen_ids = set()
         for hit in hits:
             if hit.document_id not in seen_ids:
                 ranked_ids.append(hit.document_id)
+                ranked_hits.append(hit)
                 seen_ids.add(hit.document_id)
         top_ids = ranked_ids[:k]
         relevant_rank = next((rank for rank, doc_id in enumerate(ranked_ids, start=1) if doc_id in relevant_ids), None)
+        top_hit = ranked_hits[0] if ranked_hits else None
         row = {
             'query': query,
             'language': language,
             'relevant_document_ids': sorted(relevant_ids),
             'retrieved_document_ids_at_k': top_ids,
+            'first_relevant_rank': relevant_rank,
+            'top1_document_id': top_hit.document_id if top_hit else None,
+            'top1_score': top_hit.score if top_hit else None,
+            'top1_is_relevant': bool(top_hit and top_hit.document_id in relevant_ids),
+            'missed_relevant_document_ids_at_k': sorted(relevant_ids - set(top_ids)),
             'recall_at_k': len(relevant_ids.intersection(top_ids)) / len(relevant_ids),
             'reciprocal_rank': 1.0 / relevant_rank if relevant_rank else 0.0,
         }
