@@ -487,5 +487,16 @@
     "holdout_used": false,
     "notebook_executed": true,
     "notebook_errors": 0
+  },
+  "decision": {
+    "status": "reranker_removed",
+    "active_methods": [
+      "bm25",
+      "dense",
+      "hybrid_rrf"
+    ],
+    "historical_metrics_preserved": true,
+    "reason": "Demo calibration top1 regressed from 16/16 to 15/16 and median latency rose from 21.78 to 176.59 ms. No general claim about all rerankers.",
+    "current_tests_passed": 41
   }
 }

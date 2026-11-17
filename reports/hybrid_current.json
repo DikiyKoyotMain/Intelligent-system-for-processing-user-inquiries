@@ -1,0 +1,131 @@
+{
+  "data_role": "demonstration_calibration_only",
+  "holdout_opened": false,
+  "model_names": {
+    "dense": "intfloat/multilingual-e5-small"
+  },
+  "revisions": {
+    "dense": "614241f622f53c4eeff9890bdc4f31cfecc418b3"
+  },
+  "input_sha256": {
+    "articles": "f70b8297784ee55e1867c8942b98e57ca4bb8ebf9bc6a2c84dfc65d6e41d50ff",
+    "calibration": "80985b5e574cf02d80a8fd3643aa20bbea2d58b66f93cc79dd3718f07788646e"
+  },
+  "source_sha256": {
+    "src/rag/hybrid.py": "8ce68060ed123741046c99dcf42d41b4b23c77dedad060474698b9755b681e10",
+    "scripts/compare_hybrid.py": "892cb8f5ddc5dfe21198fdcd8ac18799655dd9643dbcef1398495cfc855ba8c4"
+  },
+  "parameters": {
+    "bm25_k1": 1.0,
+    "bm25_b": 0.3,
+    "candidate_depth": 4,
+    "rrf_constant": 60,
+    "torch_cpu_threads": 2,
+    "max_tokens": 512
+  },
+  "packages": {
+    "torch": "2.15.0+cpu",
+    "sentence-transformers": "5.7.0",
+    "transformers": "5.23.0",
+    "huggingface-hub": "2.4.0"
+  },
+  "model_load_seconds": 4.168553900000006,
+  "metrics": {
+    "bm25": {
+      "query_count": 24,
+      "answerable_count": 16,
+      "recall_at_5": 1.0,
+      "mrr_at_5": 0.9375,
+      "top1_accuracy": 0.875,
+      "latency_p50_ms": 0.15709999979662825,
+      "latency_p95_ms": 0.3585800002838368,
+      "languages": {
+        "en": {
+          "query_count": 12,
+          "answerable_count": 8,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.875,
+          "top1_accuracy": 0.75,
+          "latency_p50_ms": 0.17195000009451178,
+          "latency_p95_ms": 0.3835350003555504
+        },
+        "ru": {
+          "query_count": 12,
+          "answerable_count": 8,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "top1_accuracy": 1.0,
+          "latency_p50_ms": 0.13844999966750038,
+          "latency_p95_ms": 0.29872000031900814
+        }
+      }
+    },
+    "dense": {
+      "query_count": 24,
+      "answerable_count": 16,
+      "recall_at_5": 1.0,
+      "mrr_at_5": 1.0,
+      "top1_accuracy": 1.0,
+      "latency_p50_ms": 16.575249999732478,
+      "latency_p95_ms": 20.407304999753244,
+      "languages": {
+        "en": {
+          "query_count": 12,
+          "answerable_count": 8,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "top1_accuracy": 1.0,
+          "latency_p50_ms": 16.857799999797862,
+          "latency_p95_ms": 20.88937499970598
+        },
+        "ru": {
+          "query_count": 12,
+          "answerable_count": 8,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "top1_accuracy": 1.0,
+          "latency_p50_ms": 15.971400000125868,
+          "latency_p95_ms": 17.604664999680608
+        }
+      }
+    },
+    "hybrid_rrf": {
+      "query_count": 24,
+      "answerable_count": 16,
+      "recall_at_5": 1.0,
+      "mrr_at_5": 1.0,
+      "top1_accuracy": 1.0,
+      "latency_p50_ms": 17.11909999994532,
+      "latency_p95_ms": 20.84153499945387,
+      "languages": {
+        "en": {
+          "query_count": 12,
+          "answerable_count": 8,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "top1_accuracy": 1.0,
+          "latency_p50_ms": 17.554349999954866,
+          "latency_p95_ms": 20.58189500003209
+        },
+        "ru": {
+          "query_count": 12,
+          "answerable_count": 8,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "top1_accuracy": 1.0,
+          "latency_p50_ms": 16.05924999967101,
+          "latency_p95_ms": 22.16132999983528
+        }
+      }
+    }
+  },
+  "selected_on_calibration": "dense",
+  "limitations": [
+    "Same automatically authored demo data as earlier; not an independent benchmark.",
+    "Single warm sequential pass on calibration; no production latency claim.",
+    "Dense and RRF scores need their own abstention calibration."
+  ],
+  "run_key": "5d2af9843c62b9999aff",
+  "decision": "reranker_removed",
+  "tests_passed": 41
+}

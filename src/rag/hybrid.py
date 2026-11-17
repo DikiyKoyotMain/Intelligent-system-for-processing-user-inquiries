@@ -1,5 +1,4 @@
 from dataclasses import replace
-import math
 
 import numpy as np
 
@@ -67,24 +66,3 @@ class HybridRetriever:
             raise ValueError('top_k must be positive.')
         rankings = [branch.search(query, top_k=self.candidate_depth, language=language) for branch in [self.lexical, self.dense]]
         return reciprocal_rank_fusion(rankings, self.rank_constant)[:top_k]
-
-
-class RerankingRetriever:
-    def __init__(self, retriever, cross_encoder, candidate_pool=6):
-        if isinstance(candidate_pool, bool) or not isinstance(candidate_pool, int) or candidate_pool < 1:
-            raise ValueError('candidate_pool must be positive.')
-        self.chunks = retriever.chunks
-        self.retriever, self.cross_encoder, self.candidate_pool = retriever, cross_encoder, candidate_pool
-
-    def search(self, query, top_k=5, language=None):
-        if top_k < 1:
-            raise ValueError('top_k must be positive.')
-        candidates = self.retriever.search(query, top_k=self.candidate_pool, language=language)
-        if not candidates:
-            return []
-        scores = np.asarray(self.cross_encoder.predict([(query, hit.text) for hit in candidates],
-                                                      show_progress_bar=False), dtype=float).reshape(-1)
-        if len(scores) != len(candidates) or not all(math.isfinite(score) for score in scores):
-            raise ValueError('Invalid reranker scores.')
-        indices = sorted(range(len(candidates)), key=lambda i: (-float(scores[i]), i))
-        return [replace(candidates[i], score=float(scores[i]), score_type='cross_encoder_score') for i in indices[:top_k]]

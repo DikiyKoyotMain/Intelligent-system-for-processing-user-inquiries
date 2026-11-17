@@ -3,8 +3,8 @@ from unittest.mock import Mock
 
 import numpy as np
 
-from src.rag.hybrid import DenseRetriever, HybridRetriever, RerankingRetriever, reciprocal_rank_fusion
-from src.rag.retriever import BM25Retriever, RetrievalHit, make_chunks
+from src.rag.hybrid import DenseRetriever, HybridRetriever, reciprocal_rank_fusion
+from src.rag.retriever import RetrievalHit, make_chunks
 from test_retrieval_integration import documents
 
 
@@ -53,28 +53,3 @@ class HybridTests(unittest.TestCase):
     def test_mismatched_corpora_are_rejected(self):
         with self.assertRaises(ValueError):
             HybridRetriever(Mock(chunks=self.chunks), Mock(chunks=[]))
-
-    def test_reranker_can_reorder_but_not_invent_candidates(self):
-        base = Mock(chunks=self.chunks)
-        base.search.return_value = [hit('a'), hit('b')]
-        model = Mock()
-        model.predict.return_value = [-5, 8]
-        reranked = RerankingRetriever(base, model, candidate_pool=2).search('q', top_k=1)
-        self.assertEqual(reranked[0].document_id, 'b')
-        self.assertEqual(reranked[0].score, 8)
-
-    def test_empty_candidates_skip_model(self):
-        base = Mock(chunks=self.chunks)
-        base.search.return_value = []
-        model = Mock()
-        self.assertEqual(RerankingRetriever(base, model).search('q'), [])
-        model.predict.assert_not_called()
-
-    def test_nonfinite_and_wrong_count_scores_are_rejected(self):
-        base = Mock(chunks=self.chunks)
-        base.search.return_value = [hit('a'), hit('b')]
-        for scores in [[float('nan'), 1], [1]]:
-            model = Mock()
-            model.predict.return_value = scores
-            with self.assertRaises(ValueError):
-                RerankingRetriever(base, model).search('q')
