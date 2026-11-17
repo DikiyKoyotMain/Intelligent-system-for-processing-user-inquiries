@@ -1,0 +1,31 @@
+groups:
+  - name: support-api
+    rules:
+      - alert: SupportApiUnavailable
+        expr: up{job="support-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: API недоступен для сбора метрик
+      - alert: SupportKnowledgeUnavailable
+        expr: support_knowledge_ready == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Индекс базы знаний недоступен
+      - alert: SupportHttpServerErrors
+        expr: sum(rate(support_http_requests_total{status=~"5.."}[5m])) / clamp_min(sum(rate(support_http_requests_total[5m])), 0.001) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Доля HTTP 5xx превышает исследовательский порог
+      - alert: SupportRateLimitRejections
+        expr: sum(increase(support_http_requests_total{status="429"}[5m])) > 20
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Частые отказы из за лимита запросов

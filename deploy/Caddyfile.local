@@ -1,0 +1,12 @@
+{
+    admin off
+    auto_https disable_redirects
+}
+
+https://localhost {
+    tls internal
+    header -Server
+    @private path /docs /docs/* /redoc /openapi.json
+    respond @private 404
+    reverse_proxy support-api:8000
+}

@@ -1,0 +1,36 @@
+services:
+  support-api:
+    image: ${SUPPORT_IMAGE:-x20-support-api:latest}
+    environment:
+      SUPPORT_API_KEY: ${SUPPORT_API_KEY:?Set SUPPORT_API_KEY}
+      SUPPORT_REQUESTS_PER_MINUTE: ${SUPPORT_REQUESTS_PER_MINUTE:-120}
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/work/demo_runs:uid=10001,gid=10001
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    mem_limit: 1g
+    cpus: 2
+    restart: unless-stopped
+  gateway:
+    image: caddy:2@sha256:4851e54a46b206517c574821bb5cc67f170d2156041e9fbc4c9193b45e84a75b
+    ports:
+      - "127.0.0.1:${SUPPORT_HTTPS_PORT:-8443}:443"
+    volumes:
+      - ./Caddyfile.local:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      support-api:
+        condition: service_healthy
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 1
+    restart: unless-stopped
+volumes:
+  caddy_data:
+  caddy_config:

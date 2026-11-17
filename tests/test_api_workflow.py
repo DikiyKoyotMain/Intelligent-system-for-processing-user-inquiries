@@ -124,6 +124,17 @@ class ApiWorkflowTests(unittest.TestCase):
                     second = client.post('/v1/knowledge/search', json={'text': 'card'}, headers=headers)
                     self.assertEqual(first.status_code, 200)
                     self.assertEqual(second.status_code, 429)
+                    self.assertEqual(second.headers['X-Content-Type-Options'], 'nosniff')
+                    self.assertEqual(second.headers['Retry-After'], '60')
+                    self.assertEqual(client.get('/metrics/prometheus').status_code, 401)
+                    response = client.get('/metrics/prometheus', headers=headers)
+                    self.assertEqual(response.status_code, 200)
+                    self.assertIn('route="/v1/knowledge/search",status="429"', response.text)
+                    self.assertIn('route="/metrics/prometheus",status="401"', response.text)
+                    self.assertIn('support_http_request_duration_seconds_bucket', response.text)
+                    self.assertIn('le="+Inf"', response.text)
+                    self.assertIn('support_knowledge_ready 1', response.text)
+                    self.assertNotIn('test-secret', response.text)
 
     def test_agent_endpoint_executes_selected_tools(self):
         from src.agent.service import Decision

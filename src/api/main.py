@@ -19,7 +19,7 @@ import joblib
 from fastapi import FastAPI, HTTPException, Request, Security
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, PlainTextResponse
 
 from src.rag.retriever import BM25Retriever, KnowledgeRetriever
 from src.rag.answers import GenerationUnavailable, supported_answer
@@ -321,6 +321,8 @@ app = FastAPI(
 metrics_lock = Lock()
 request_counts = Counter()
 request_duration_seconds = Counter()
+request_duration_buckets = Counter()
+HTTP_DURATION_BUCKETS = (.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, math.inf)
 rate_window_started = time.monotonic()
 rate_window_count = 0
 
@@ -329,29 +331,38 @@ rate_window_count = 0
 async def operational_controls(request: Request, call_next):
     global rate_window_started, rate_window_count
     started = time.perf_counter()
-    protected = request.url.path.startswith('/v1/') or request.url.path == '/metrics'
-    api_key = os.environ.get('SUPPORT_API_KEY')
-    if protected and api_key and not compare_digest(request.headers.get('x-api-key', ''), api_key):
-        return JSONResponse({'detail': 'Invalid API key.'}, status_code=401)
-    limit = int(os.environ.get('SUPPORT_REQUESTS_PER_MINUTE', '120'))
-    if protected and request.method != 'GET':
+    protected = request.url.path.startswith('/v1/') or request.url.path in {'/metrics', '/metrics/prometheus'}
+    response = None
+    try:
+        api_key = os.environ.get('SUPPORT_API_KEY')
+        if protected and api_key and not compare_digest(request.headers.get('x-api-key', ''), api_key):
+            response = JSONResponse({'detail': 'Invalid API key.'}, status_code=401)
+        limit = int(os.environ.get('SUPPORT_REQUESTS_PER_MINUTE', '120'))
+        if response is None and protected and request.method != 'GET':
+            with metrics_lock:
+                now = time.monotonic()
+                if now - rate_window_started >= 60:
+                    rate_window_started, rate_window_count = now, 0
+                rate_window_count += 1
+                limited = rate_window_count > limit
+            if limited:
+                response = JSONResponse({'detail': 'Request limit exceeded.'}, status_code=429, headers={'Retry-After': '60'})
+        if response is None:
+            response = await call_next(request)
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        return response
+    finally:
+        route = request.scope.get('route')
+        route_path = route.path if route else next((route.path for route in app.routes
+            if getattr(route, 'path', None) == request.url.path), 'unmatched')
         with metrics_lock:
-            now = time.monotonic()
-            if now - rate_window_started >= 60:
-                rate_window_started, rate_window_count = now, 0
-            rate_window_count += 1
-            limited = rate_window_count > limit
-        if limited:
-            return JSONResponse({'detail': 'Request limit exceeded.'}, status_code=429, headers={'Retry-After': '60'})
-    response = await call_next(request)
-    route = request.scope.get('route')
-    route_path = route.path if route else 'unmatched'
-    with metrics_lock:
-        key = (request.method, route_path, response.status_code)
-        request_counts[key] += 1
-        request_duration_seconds[key] += time.perf_counter() - started
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    return response
+            key = (request.method, route_path, response.status_code if response is not None else 500)
+            request_counts[key] += 1
+            elapsed = time.perf_counter() - started
+            request_duration_seconds[key] += elapsed
+            for upper in HTTP_DURATION_BUCKETS:
+                if elapsed <= upper:
+                    request_duration_buckets[(*key, upper)] += 1
 
 
 @app.get('/metrics', tags=['operations'])
@@ -361,6 +372,24 @@ def metrics():
             {'method': method, 'route': route, 'status_code': code, 'count': count,
              'duration_seconds_sum': request_duration_seconds[(method, route, code)]}
             for (method, route, code), count in sorted(request_counts.items())]}
+
+
+@app.get('/metrics/prometheus', response_class=PlainTextResponse, tags=['operations'])
+def prometheus_metrics():
+    lines = ['# TYPE support_http_requests_total counter', '# TYPE support_http_request_duration_seconds histogram']
+    lines += ['# TYPE support_knowledge_ready gauge',
+              f'support_knowledge_ready {int(getattr(app.state, "knowledge_retriever", None) is not None)}',
+              '# TYPE support_model_ready gauge', f'support_model_ready {int(getattr(app.state, "model", None) is not None)}']
+    with metrics_lock:
+        for (method, route, code), count in sorted(request_counts.items()):
+            labels = f'method="{method}",route="{route}",status="{code}"'
+            lines.append(f'support_http_requests_total{{{labels}}} {count}')
+            lines.append(f'support_http_request_duration_seconds_sum{{{labels}}} {request_duration_seconds[(method, route, code)]:.9f}')
+            lines.append(f'support_http_request_duration_seconds_count{{{labels}}} {count}')
+            for upper in HTTP_DURATION_BUCKETS:
+                boundary = '+Inf' if math.isinf(upper) else str(upper)
+                lines.append(f'support_http_request_duration_seconds_bucket{{{labels},le="{boundary}"}} {request_duration_buckets[(method, route, code, upper)]}')
+    return PlainTextResponse('\n'.join(lines)+'\n', media_type='text/plain; version=0.0.4')
 
 
 @app.get('/health/live', response_model=HealthResponse, tags=['health'])
