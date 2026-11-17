@@ -1,0 +1,24 @@
+{"query": "Where should I run pip with requirements.txt?", "language": "en", "relevant_document_ids": ["install_en"], "query_group_id": "hold_install_en"}
+{"query": "Из какой папки запускать установку requirements.txt?", "language": "ru", "relevant_document_ids": ["install_ru"], "query_group_id": "hold_install_ru"}
+{"query": "Where can I inspect the API schema?", "language": "en", "relevant_document_ids": ["start_en"], "query_group_id": "hold_start_en"}
+{"query": "Где посмотреть схему API?", "language": "ru", "relevant_document_ids": ["start_ru"], "query_group_id": "hold_start_ru"}
+{"query": "What does model readiness 503 mean?", "language": "en", "relevant_document_ids": ["readiness_en"], "query_group_id": "hold_readiness_en"}
+{"query": "Что означает 503 проверки готовности модели?", "language": "ru", "relevant_document_ids": ["readiness_ru"], "query_group_id": "hold_readiness_ru"}
+{"query": "Why is classifier confidence not returned?", "language": "en", "relevant_document_ids": ["classify_en"], "query_group_id": "hold_classify_en"}
+{"query": "Почему классификатор не возвращает confidence?", "language": "ru", "relevant_document_ids": ["classify_ru"], "query_group_id": "hold_classify_ru"}
+{"query": "Which status is allowed for indexing articles?", "language": "en", "relevant_document_ids": ["corpus_en"], "query_group_id": "hold_corpus_en"}
+{"query": "Какой статус разрешён для индексации статей?", "language": "ru", "relevant_document_ids": ["corpus_ru"], "query_group_id": "hold_corpus_ru"}
+{"query": "How should query_group_id be used for paraphrases?", "language": "en", "relevant_document_ids": ["split_en"], "query_group_id": "hold_split_en"}
+{"query": "Как использовать query_group_id для перефразировок?", "language": "ru", "relevant_document_ids": ["split_ru"], "query_group_id": "hold_split_ru"}
+{"query": "Do passing tests establish real customer inquiry quality?", "language": "en", "relevant_document_ids": ["tests_en"], "query_group_id": "hold_tests_en"}
+{"query": "Доказывают ли тесты качество на обращениях клиентов?", "language": "ru", "relevant_document_ids": ["tests_ru"], "query_group_id": "hold_tests_ru"}
+{"query": "Can retrieval run files contain query texts?", "language": "en", "relevant_document_ids": ["privacy_en"], "query_group_id": "hold_privacy_en"}
+{"query": "Могут ли файлы запуска содержать тексты запросов?", "language": "ru", "relevant_document_ids": ["privacy_ru"], "query_group_id": "hold_privacy_ru"}
+{"query": "When do cherry trees blossom?", "language": "en", "relevant_document_ids": [], "query_group_id": "hold_unanswerable_en_0"}
+{"query": "Explain butterfly migration", "language": "en", "relevant_document_ids": [], "query_group_id": "hold_unanswerable_en_1"}
+{"query": "Which telescope should I purchase?", "language": "en", "relevant_document_ids": [], "query_group_id": "hold_unanswerable_en_2"}
+{"query": "How do I tune a violin?", "language": "en", "relevant_document_ids": [], "query_group_id": "hold_unanswerable_en_3"}
+{"query": "Когда цветёт вишня?", "language": "ru", "relevant_document_ids": [], "query_group_id": "hold_unanswerable_ru_0"}
+{"query": "Объясните миграцию бабочек", "language": "ru", "relevant_document_ids": [], "query_group_id": "hold_unanswerable_ru_1"}
+{"query": "Какой телескоп купить?", "language": "ru", "relevant_document_ids": [], "query_group_id": "hold_unanswerable_ru_2"}
+{"query": "Как настроить скрипку?", "language": "ru", "relevant_document_ids": [], "query_group_id": "hold_unanswerable_ru_3"}

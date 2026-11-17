@@ -1,0 +1,15 @@
+{
+  "purpose": "Software demonstration, not a banking knowledge base",
+  "authorship": "AI-authored project operations instructions and query labels",
+  "expert_review": false,
+  "independent_final_benchmark": false,
+  "limitations": [
+    "Queries and documents share authorship and domain vocabulary.",
+    "Group identifiers demonstrate the pipeline but do not certify semantic independence.",
+    "approved denotes demo loader compatibility only, not business approval.",
+    "No banking advice is included."
+  ],
+  "article_count": 16,
+  "calibration_count": 24,
+  "holdout_count": 24
+}

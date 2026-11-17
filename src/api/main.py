@@ -6,20 +6,27 @@ import logging
 import math
 import os
 import re
+import time
+from collections import Counter
+from secrets import compare_digest
+from threading import Lock
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
 from uuid import uuid4
 
 import joblib
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Security
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from starlette.responses import JSONResponse
 
 from src.rag.retriever import BM25Retriever, KnowledgeRetriever
+from src.rag.answers import GenerationUnavailable, supported_answer
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = ROOT / 'configs' / 'final_model.json'
-RETRIEVAL_CONFIG_PATH = ROOT / 'configs' / 'retrieval.json'
+RETRIEVAL_CONFIG_PATH = Path(os.environ.get('RETRIEVAL_CONFIG_PATH', str(ROOT / 'configs' / 'retrieval.json')))
 logger = logging.getLogger('support_intelligence.api')
 
 
@@ -88,6 +95,26 @@ class KnowledgeSearchResponse(BaseModel):
     retrieval_status: Literal['threshold_not_configured', 'threshold_passed', 'threshold_not_met', 'no_candidates', 'calibration_mismatch']
     threshold: float | None = None
     hits: list[KnowledgeSearchHit]
+
+
+class AnswerRequest(KnowledgeSearchRequest):
+    mode: Literal['extractive', 'ollama'] = 'extractive'
+
+
+class AnswerCitation(BaseModel):
+    document_id: str
+    chunk_id: str
+    source: str
+    quote: str
+
+
+class AnswerResponse(BaseModel):
+    request_id: str
+    status: Literal['abstained', 'supported_excerpt']
+    mode: Literal['extractive', 'ollama']
+    answer: str | None
+    citations: list[AnswerCitation]
+    reason: str
 
 
 class HealthResponse(BaseModel):
@@ -280,7 +307,52 @@ app = FastAPI(
     version='1.0.0',
     description='Классификация обращения и поиск фрагментов в одобренной базе знаний.',
     lifespan=lifespan,
+    dependencies=[Security(APIKeyHeader(name='x-api-key', auto_error=False))],
 )
+
+metrics_lock = Lock()
+request_counts = Counter()
+request_duration_seconds = Counter()
+rate_window_started = time.monotonic()
+rate_window_count = 0
+
+
+@app.middleware('http')
+async def operational_controls(request: Request, call_next):
+    global rate_window_started, rate_window_count
+    started = time.perf_counter()
+    protected = request.url.path.startswith('/v1/') or request.url.path == '/metrics'
+    api_key = os.environ.get('SUPPORT_API_KEY')
+    if protected and api_key and not compare_digest(request.headers.get('x-api-key', ''), api_key):
+        return JSONResponse({'detail': 'Invalid API key.'}, status_code=401)
+    limit = int(os.environ.get('SUPPORT_REQUESTS_PER_MINUTE', '120'))
+    if protected and request.method != 'GET':
+        with metrics_lock:
+            now = time.monotonic()
+            if now - rate_window_started >= 60:
+                rate_window_started, rate_window_count = now, 0
+            rate_window_count += 1
+            limited = rate_window_count > limit
+        if limited:
+            return JSONResponse({'detail': 'Request limit exceeded.'}, status_code=429, headers={'Retry-After': '60'})
+    response = await call_next(request)
+    route = request.scope.get('route')
+    route_path = route.path if route else 'unmatched'
+    with metrics_lock:
+        key = (request.method, route_path, response.status_code)
+        request_counts[key] += 1
+        request_duration_seconds[key] += time.perf_counter() - started
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    return response
+
+
+@app.get('/metrics', tags=['operations'])
+def metrics():
+    with metrics_lock:
+        return {'scope': 'single_process_since_start', 'requests': [
+            {'method': method, 'route': route, 'status_code': code, 'count': count,
+             'duration_seconds_sum': request_duration_seconds[(method, route, code)]}
+            for (method, route, code), count in sorted(request_counts.items())]}
 
 
 @app.get('/health/live', response_model=HealthResponse, tags=['health'])
@@ -360,3 +432,14 @@ def search_knowledge(payload: KnowledgeSearchRequest, request: Request) -> Knowl
         threshold=threshold,
         hits=[KnowledgeSearchHit(**hit.__dict__) for hit in hits],
     )
+
+
+@app.post('/v1/knowledge/answer', response_model=AnswerResponse, tags=['knowledge'])
+def answer_knowledge(payload: AnswerRequest, request: Request) -> AnswerResponse:
+    search_payload = KnowledgeSearchRequest(text=payload.text, top_k=payload.top_k, language=payload.language)
+    search = search_knowledge(search_payload, request)
+    try:
+        result = supported_answer(payload.text, search.hits, search.retrieval_status, payload.mode)
+    except GenerationUnavailable as exc:
+        raise HTTPException(status_code=503, detail='Answer provider unavailable or evidence validation failed.') from exc
+    return AnswerResponse(request_id=search.request_id, **result)

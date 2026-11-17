@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from dataclasses import dataclass
 from datetime import date
@@ -165,9 +166,9 @@ class BM25Retriever:
     def __init__(self, chunks: list[KnowledgeChunk], k1: float = 1.5, b: float = 0.75):
         if not chunks:
             raise ValueError('Для поиска требуется хотя бы один фрагмент.')
-        if k1 <= 0:
+        if not math.isfinite(k1) or k1 <= 0:
             raise ValueError('k1 должен быть положительным.')
-        if not 0 <= b <= 1:
+        if not math.isfinite(b) or not 0 <= b <= 1:
             raise ValueError('b должен находиться в диапазоне от 0 до 1.')
         self.chunks = tuple(chunks)
         self.k1 = float(k1)
@@ -192,9 +193,9 @@ class BM25Retriever:
         return cls(chunks, **kwargs)
 
     def with_parameters(self, k1: float, b: float) -> BM25Retriever:
-        if k1 <= 0:
+        if not math.isfinite(k1) or k1 <= 0:
             raise ValueError('k1 должен быть положительным.')
-        if not 0 <= b <= 1:
+        if not math.isfinite(b) or not 0 <= b <= 1:
             raise ValueError('b должен находиться в диапазоне от 0 до 1.')
         candidate = object.__new__(BM25Retriever)
         candidate.chunks = self.chunks

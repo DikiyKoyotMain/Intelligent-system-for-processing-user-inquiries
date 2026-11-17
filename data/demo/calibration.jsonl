@@ -1,0 +1,24 @@
+{"query": "How do I install project dependencies?", "language": "en", "relevant_document_ids": ["install_en"], "query_group_id": "cal_install_en"}
+{"query": "Как установить зависимости проекта?", "language": "ru", "relevant_document_ids": ["install_ru"], "query_group_id": "cal_install_ru"}
+{"query": "How do I start the local API?", "language": "en", "relevant_document_ids": ["start_en"], "query_group_id": "cal_start_en"}
+{"query": "Как запустить локальный API?", "language": "ru", "relevant_document_ids": ["start_ru"], "query_group_id": "cal_start_ru"}
+{"query": "Which endpoint checks knowledge index readiness?", "language": "en", "relevant_document_ids": ["readiness_en"], "query_group_id": "cal_readiness_en"}
+{"query": "Какой endpoint проверяет готовность индекса?", "language": "ru", "relevant_document_ids": ["readiness_ru"], "query_group_id": "cal_readiness_ru"}
+{"query": "Which endpoint classifies an inquiry?", "language": "en", "relevant_document_ids": ["classify_en"], "query_group_id": "cal_classify_en"}
+{"query": "Какой endpoint классифицирует обращение?", "language": "ru", "relevant_document_ids": ["classify_ru"], "query_group_id": "cal_classify_ru"}
+{"query": "What fields are required in a knowledge article?", "language": "en", "relevant_document_ids": ["corpus_en"], "query_group_id": "cal_corpus_en"}
+{"query": "Какие поля обязательны для статьи?", "language": "ru", "relevant_document_ids": ["corpus_ru"], "query_group_id": "cal_corpus_ru"}
+{"query": "Where should I select retrieval thresholds?", "language": "en", "relevant_document_ids": ["split_en"], "query_group_id": "cal_split_en"}
+{"query": "На какой выборке выбирать пороги поиска?", "language": "ru", "relevant_document_ids": ["split_ru"], "query_group_id": "cal_split_ru"}
+{"query": "How do I run automated tests?", "language": "en", "relevant_document_ids": ["tests_en"], "query_group_id": "cal_tests_en"}
+{"query": "Как запустить автоматические тесты?", "language": "ru", "relevant_document_ids": ["tests_ru"], "query_group_id": "cal_tests_ru"}
+{"query": "Where are private retrieval artifacts stored?", "language": "en", "relevant_document_ids": ["privacy_en"], "query_group_id": "cal_privacy_en"}
+{"query": "Где хранятся локальные артефакты поиска?", "language": "ru", "relevant_document_ids": ["privacy_ru"], "query_group_id": "cal_privacy_ru"}
+{"query": "What is the lunar weather forecast?", "language": "en", "relevant_document_ids": [], "query_group_id": "cal_unanswerable_en_0"}
+{"query": "Please book a concert ticket", "language": "en", "relevant_document_ids": [], "query_group_id": "cal_unanswerable_en_1"}
+{"query": "How do I cook pumpkin soup?", "language": "en", "relevant_document_ids": [], "query_group_id": "cal_unanswerable_en_2"}
+{"query": "What is the history of volcanoes?", "language": "en", "relevant_document_ids": [], "query_group_id": "cal_unanswerable_en_3"}
+{"query": "Какая погода на Луне?", "language": "ru", "relevant_document_ids": [], "query_group_id": "cal_unanswerable_ru_0"}
+{"query": "Забронируйте билет на концерт", "language": "ru", "relevant_document_ids": [], "query_group_id": "cal_unanswerable_ru_1"}
+{"query": "Как приготовить тыквенный суп?", "language": "ru", "relevant_document_ids": [], "query_group_id": "cal_unanswerable_ru_2"}
+{"query": "Расскажите историю вулканов", "language": "ru", "relevant_document_ids": [], "query_group_id": "cal_unanswerable_ru_3"}
