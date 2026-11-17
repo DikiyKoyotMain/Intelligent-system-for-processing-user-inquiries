@@ -11,6 +11,7 @@ from delivery_guide import append_delivery_guide
 from hybrid_guide import append_hybrid_guide
 from agent_guide import append_agent_guide
 from public_banking_guide import append_public_banking_guide
+from calibration_guide import append_calibration_guide
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'docs' / 'study_guide.docx'
@@ -403,6 +404,7 @@ append_delivery_guide(doc, ROOT, add_table, add_code_block)
 append_hybrid_guide(doc, ROOT, add_table, add_code_block)
 append_agent_guide(doc, ROOT, add_table, add_code_block)
 append_public_banking_guide(doc, ROOT, add_table, add_code_block)
+append_calibration_guide(doc, ROOT, add_table, add_code_block)
 
 doc.add_heading('Источники данных и публикации',level=1).paragraph_format.page_break_before=True
 for source in [

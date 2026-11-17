@@ -32,6 +32,7 @@ def export(input_path, output_dir):
     for split, examples in splits.items():
         (output_dir / f'queries_{split}.jsonl').write_text(''.join(json.dumps(row, ensure_ascii=False)+'\n' for row in examples), encoding='utf-8')
     (output_dir / 'manifest.json').write_text(json.dumps(dict(corpus_sha256=fingerprint, reviewed_input_sha256=digest(input_path),
+                                                           split_sha256={split: digest(output_dir / f'queries_{split}.jsonl') for split in splits},
                                                            source_approval='research_only', independent_review_attestations='metadata supplied by reviewers; not identity verification'), indent=2)+'\n', encoding='utf-8')
     return output_dir
 

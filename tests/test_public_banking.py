@@ -1,3 +1,4 @@
+import json
 import shutil
 import tempfile
 import unittest
@@ -80,4 +81,3 @@ class ExpertReviewGateTests(unittest.TestCase):
         result = validate_reviewed_queries(rows, {'doc'})
         self.assertEqual(len(result['holdout']), 1)
         self.assertEqual(len(result['calibration']), 1)
-import json
