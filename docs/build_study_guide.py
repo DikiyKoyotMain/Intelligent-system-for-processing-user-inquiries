@@ -8,6 +8,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from delivery_guide import append_delivery_guide
+from hybrid_guide import append_hybrid_guide
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'docs' / 'study_guide.docx'
@@ -397,6 +398,7 @@ add_table(doc,['Порядок','Работа','Результат','Артеф�
     ('30','Карта завершённости и следующий gate','Разделены готовность кода, измеренные результаты и обязательные входные данные; описан путь к реальной сквозной проверке поиска','README.md, docs/study_guide.docx, reports/research.md')])
 
 append_delivery_guide(doc, ROOT, add_table, add_code_block)
+append_hybrid_guide(doc, ROOT, add_table, add_code_block)
 
 doc.add_heading('Источники данных и публикации',level=1)
 for source in [

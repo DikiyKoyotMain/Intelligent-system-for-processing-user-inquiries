@@ -1,0 +1,491 @@
+{
+  "data_role": "demonstration_calibration_only",
+  "holdout_opened": false,
+  "model_names": {
+    "dense": "intfloat/multilingual-e5-small",
+    "reranker": "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+  },
+  "revisions": {
+    "dense": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+    "reranker": "1427fd652930e4ba29e8149678df786c240d8825"
+  },
+  "input_sha256": {
+    "articles": "f70b8297784ee55e1867c8942b98e57ca4bb8ebf9bc6a2c84dfc65d6e41d50ff",
+    "calibration": "80985b5e574cf02d80a8fd3643aa20bbea2d58b66f93cc79dd3718f07788646e"
+  },
+  "source_sha256": {
+    "src/rag/hybrid.py": "82700dcf8ba9f34acc68516bfd98c286fa06b5335021df0517273dd43cd522db",
+    "scripts/compare_hybrid.py": "24373b390531556980b48d18c7515dd3256817e312446b496ff79c54f49d5b30"
+  },
+  "parameters": {
+    "bm25_k1": 1.0,
+    "bm25_b": 0.3,
+    "candidate_depth": 4,
+    "rrf_constant": 60,
+    "reranker_pool": 6,
+    "torch_cpu_threads": 2,
+    "max_tokens": 512
+  },
+  "packages": {
+    "torch": "2.15.0+cpu",
+    "sentence-transformers": "5.7.0",
+    "transformers": "5.23.0",
+    "huggingface-hub": "2.4.0"
+  },
+  "model_load_seconds": 109.45714459999999,
+  "metrics": {
+    "bm25": {
+      "query_count": 24,
+      "answerable_count": 16,
+      "recall_at_5": 1.0,
+      "mrr_at_5": 0.9375,
+      "top1_accuracy": 0.875,
+      "latency_p50_ms": 0.3307000001768756,
+      "latency_p95_ms": 1.4255649998631266,
+      "languages": {
+        "en": {
+          "query_count": 12,
+          "answerable_count": 8,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.875,
+          "top1_accuracy": 0.75,
+          "latency_p50_ms": 0.29855000002498855,
+          "latency_p95_ms": 0.6720950001636081
+        },
+        "ru": {
+          "query_count": 12,
+          "answerable_count": 8,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "top1_accuracy": 1.0,
+          "latency_p50_ms": 0.36625000029744115,
+          "latency_p95_ms": 1.5932499999053105
+        }
+      }
+    },
+    "dense": {
+      "query_count": 24,
+      "answerable_count": 16,
+      "recall_at_5": 1.0,
+      "mrr_at_5": 1.0,
+      "top1_accuracy": 1.0,
+      "latency_p50_ms": 20.009449999633944,
+      "latency_p95_ms": 44.730245000528114,
+      "languages": {
+        "en": {
+          "query_count": 12,
+          "answerable_count": 8,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "top1_accuracy": 1.0,
+          "latency_p50_ms": 19.836599999507598,
+          "latency_p95_ms": 57.245169999578096
+        },
+        "ru": {
+          "query_count": 12,
+          "answerable_count": 8,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "top1_accuracy": 1.0,
+          "latency_p50_ms": 20.45029999999315,
+          "latency_p95_ms": 36.10296500050934
+        }
+      }
+    },
+    "hybrid_rrf": {
+      "query_count": 24,
+      "answerable_count": 16,
+      "recall_at_5": 1.0,
+      "mrr_at_5": 1.0,
+      "top1_accuracy": 1.0,
+      "latency_p50_ms": 21.779049999622657,
+      "latency_p95_ms": 25.809170000047743,
+      "languages": {
+        "en": {
+          "query_count": 12,
+          "answerable_count": 8,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "top1_accuracy": 1.0,
+          "latency_p50_ms": 22.129050000330608,
+          "latency_p95_ms": 25.912410000410087
+        },
+        "ru": {
+          "query_count": 12,
+          "answerable_count": 8,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "top1_accuracy": 1.0,
+          "latency_p50_ms": 21.300549999523355,
+          "latency_p95_ms": 25.5842899997333
+        }
+      }
+    },
+    "hybrid_reranker": {
+      "query_count": 24,
+      "answerable_count": 16,
+      "recall_at_5": 1.0,
+      "mrr_at_5": 0.953125,
+      "top1_accuracy": 0.9375,
+      "latency_p50_ms": 176.59444999981133,
+      "latency_p95_ms": 212.20320499996882,
+      "languages": {
+        "en": {
+          "query_count": 12,
+          "answerable_count": 8,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 1.0,
+          "top1_accuracy": 1.0,
+          "latency_p50_ms": 165.81814999972266,
+          "latency_p95_ms": 179.4450650001636
+        },
+        "ru": {
+          "query_count": 12,
+          "answerable_count": 8,
+          "recall_at_5": 1.0,
+          "mrr_at_5": 0.90625,
+          "top1_accuracy": 0.875,
+          "latency_p50_ms": 181.86060000061843,
+          "latency_p95_ms": 220.01340500009974
+        }
+      }
+    }
+  },
+  "selected_on_calibration": "dense",
+  "reranker_changes": [
+    {
+      "query": "How do I install project dependencies?",
+      "language": "en",
+      "before_ids": [
+        "install_en",
+        "tests_en",
+        "start_en",
+        "classify_en",
+        "privacy_en"
+      ],
+      "after_ids": [
+        "install_en",
+        "start_en",
+        "classify_en",
+        "tests_en",
+        "privacy_en"
+      ],
+      "top1_delta": 0,
+      "mrr_delta": 0.0
+    },
+    {
+      "query": "Как установить зависимости проекта?",
+      "language": "ru",
+      "before_ids": [
+        "install_ru",
+        "privacy_ru",
+        "classify_ru",
+        "start_ru",
+        "corpus_ru"
+      ],
+      "after_ids": [
+        "install_ru",
+        "start_ru",
+        "classify_ru",
+        "privacy_ru",
+        "corpus_ru"
+      ],
+      "top1_delta": 0,
+      "mrr_delta": 0.0
+    },
+    {
+      "query": "How do I start the local API?",
+      "language": "en",
+      "before_ids": [
+        "start_en",
+        "readiness_en",
+        "install_en",
+        "corpus_en",
+        "split_en"
+      ],
+      "after_ids": [
+        "start_en",
+        "readiness_en",
+        "split_en",
+        "corpus_en",
+        "install_en"
+      ],
+      "top1_delta": 0,
+      "mrr_delta": 0.0
+    },
+    {
+      "query": "Как запустить локальный API?",
+      "language": "ru",
+      "before_ids": [
+        "start_ru",
+        "readiness_ru",
+        "corpus_ru",
+        "classify_ru",
+        "install_ru"
+      ],
+      "after_ids": [
+        "start_ru",
+        "readiness_ru",
+        "install_ru",
+        "corpus_ru",
+        "classify_ru"
+      ],
+      "top1_delta": 0,
+      "mrr_delta": 0.0
+    },
+    {
+      "query": "Which endpoint checks knowledge index readiness?",
+      "language": "en",
+      "before_ids": [
+        "readiness_en",
+        "privacy_en",
+        "corpus_en",
+        "classify_en"
+      ],
+      "after_ids": [
+        "readiness_en",
+        "corpus_en",
+        "privacy_en",
+        "classify_en"
+      ],
+      "top1_delta": 0,
+      "mrr_delta": 0.0
+    },
+    {
+      "query": "Какой endpoint проверяет готовность индекса?",
+      "language": "ru",
+      "before_ids": [
+        "readiness_ru",
+        "classify_ru",
+        "tests_ru",
+        "corpus_ru",
+        "install_ru"
+      ],
+      "after_ids": [
+        "readiness_ru",
+        "classify_ru",
+        "split_ru",
+        "corpus_ru",
+        "install_ru"
+      ],
+      "top1_delta": 0,
+      "mrr_delta": 0.0
+    },
+    {
+      "query": "Which endpoint classifies an inquiry?",
+      "language": "en",
+      "before_ids": [
+        "classify_en",
+        "privacy_en",
+        "corpus_en",
+        "tests_en",
+        "install_en"
+      ],
+      "after_ids": [
+        "classify_en",
+        "tests_en",
+        "readiness_en",
+        "corpus_en",
+        "privacy_en"
+      ],
+      "top1_delta": 0,
+      "mrr_delta": 0.0
+    },
+    {
+      "query": "Какой endpoint классифицирует обращение?",
+      "language": "ru",
+      "before_ids": [
+        "classify_ru",
+        "corpus_ru",
+        "readiness_ru",
+        "install_ru",
+        "split_ru"
+      ],
+      "after_ids": [
+        "classify_ru",
+        "split_ru",
+        "readiness_ru",
+        "privacy_ru",
+        "corpus_ru"
+      ],
+      "top1_delta": 0,
+      "mrr_delta": 0.0
+    },
+    {
+      "query": "What fields are required in a knowledge article?",
+      "language": "en",
+      "before_ids": [
+        "corpus_en",
+        "privacy_en",
+        "classify_en",
+        "readiness_en",
+        "tests_en"
+      ],
+      "after_ids": [
+        "corpus_en",
+        "privacy_en",
+        "tests_en",
+        "classify_en",
+        "readiness_en"
+      ],
+      "top1_delta": 0,
+      "mrr_delta": 0.0
+    },
+    {
+      "query": "Какие поля обязательны для статьи?",
+      "language": "ru",
+      "before_ids": [
+        "corpus_ru",
+        "privacy_ru",
+        "split_ru",
+        "start_ru",
+        "classify_ru"
+      ],
+      "after_ids": [
+        "corpus_ru",
+        "classify_ru",
+        "readiness_ru",
+        "split_ru",
+        "start_ru"
+      ],
+      "top1_delta": 0,
+      "mrr_delta": 0.0
+    },
+    {
+      "query": "Where should I select retrieval thresholds?",
+      "language": "en",
+      "before_ids": [
+        "split_en",
+        "install_en",
+        "privacy_en",
+        "readiness_en",
+        "classify_en"
+      ],
+      "after_ids": [
+        "split_en",
+        "privacy_en",
+        "readiness_en",
+        "classify_en",
+        "install_en"
+      ],
+      "top1_delta": 0,
+      "mrr_delta": 0.0
+    },
+    {
+      "query": "На какой выборке выбирать пороги поиска?",
+      "language": "ru",
+      "before_ids": [
+        "split_ru",
+        "tests_ru",
+        "classify_ru",
+        "readiness_ru",
+        "corpus_ru"
+      ],
+      "after_ids": [
+        "split_ru",
+        "readiness_ru",
+        "privacy_ru",
+        "corpus_ru",
+        "tests_ru"
+      ],
+      "top1_delta": 0,
+      "mrr_delta": 0.0
+    },
+    {
+      "query": "How do I run automated tests?",
+      "language": "en",
+      "before_ids": [
+        "tests_en",
+        "install_en",
+        "privacy_en",
+        "classify_en",
+        "readiness_en"
+      ],
+      "after_ids": [
+        "tests_en",
+        "readiness_en",
+        "install_en",
+        "classify_en",
+        "privacy_en"
+      ],
+      "top1_delta": 0,
+      "mrr_delta": 0.0
+    },
+    {
+      "query": "Как запустить автоматические тесты?",
+      "language": "ru",
+      "before_ids": [
+        "tests_ru",
+        "install_ru",
+        "classify_ru",
+        "readiness_ru",
+        "corpus_ru"
+      ],
+      "after_ids": [
+        "start_ru",
+        "readiness_ru",
+        "corpus_ru",
+        "tests_ru",
+        "install_ru"
+      ],
+      "top1_delta": -1,
+      "mrr_delta": -0.75
+    },
+    {
+      "query": "Where are private retrieval artifacts stored?",
+      "language": "en",
+      "before_ids": [
+        "privacy_en",
+        "corpus_en",
+        "classify_en",
+        "readiness_en",
+        "install_en"
+      ],
+      "after_ids": [
+        "privacy_en",
+        "start_en",
+        "readiness_en",
+        "corpus_en",
+        "install_en"
+      ],
+      "top1_delta": 0,
+      "mrr_delta": 0.0
+    },
+    {
+      "query": "Где хранятся локальные артефакты поиска?",
+      "language": "ru",
+      "before_ids": [
+        "privacy_ru",
+        "split_ru",
+        "corpus_ru",
+        "classify_ru",
+        "start_ru"
+      ],
+      "after_ids": [
+        "privacy_ru",
+        "corpus_ru",
+        "start_ru",
+        "split_ru",
+        "classify_ru"
+      ],
+      "top1_delta": 0,
+      "mrr_delta": 0.0
+    }
+  ],
+  "limitations": [
+    "Same automatically authored demo data as earlier; not an independent benchmark.",
+    "Single warm sequential pass on calibration; no production latency claim.",
+    "Dense, RRF and cross-encoder scores need their own abstention calibration.",
+    "A reranker cannot retrieve documents outside its candidate pool."
+  ],
+  "run_key": "1e3061fbca3c6e852435",
+  "validation": {
+    "tests_passed": 44,
+    "tests_failed": 0,
+    "tests_errors": 0,
+    "neural_inference": "actual_cpu_models",
+    "holdout_used": false,
+    "notebook_executed": true,
+    "notebook_errors": 0
+  }
+}
