@@ -1,0 +1,24 @@
+services:
+  support-api:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      SUPPORT_API_KEY: ${SUPPORT_API_KEY:?Set SUPPORT_API_KEY before starting Compose}
+      SUPPORT_REQUESTS_PER_MINUTE: "120"
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-}
+    volumes:
+      - ./work/final_models:/app/work/final_models:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/work/demo_runs:uid=10001,gid=10001
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 1g
+    cpus: 2
+    restart: unless-stopped
