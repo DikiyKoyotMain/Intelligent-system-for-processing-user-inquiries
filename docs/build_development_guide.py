@@ -15,8 +15,8 @@ from calibration_guide import append_calibration_guide
 from operations_guide import append_operations_guide
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / 'docs' / 'study_guide.docx'
-TEMP_OUT = ROOT / 'work' / 'study_guide_generated.docx'
+OUT = ROOT / 'docs' / 'development_guide.docx'
+TEMP_OUT = ROOT / 'work' / 'development_guide_generated.docx'
 FIG = ROOT / 'reports' / 'figures'
 BASELINE = ROOT / 'experiments' / 'baseline'
 RESULTS = json.loads((BASELINE / 'results.json').read_text(encoding='utf-8'))
@@ -71,6 +71,11 @@ def add_code_block(doc, code):
 
 
 doc=Document(); sec=doc.sections[0]
+doc.core_properties.author = 'DikiyKoyotMain'
+doc.core_properties.last_modified_by = 'DikiyKoyotMain'
+doc.core_properties.title = 'Разработка интеллектуальной системы обработки обращений'
+doc.core_properties.subject = 'Техническая документация проекта'
+doc.core_properties.comments = 'Архитектура решения и журнал экспериментов'
 sec.top_margin=Inches(.72); sec.bottom_margin=Inches(.72); sec.left_margin=Inches(.82); sec.right_margin=Inches(.82)
 update_fields=OxmlElement('w:updateFields'); update_fields.set(qn('w:val'),'true'); doc.settings._element.append(update_fields)
 styles=doc.styles; styles['Normal'].font.name='Aptos'; styles['Normal'].font.size=Pt(10); styles['Normal'].font.color.rgb=RGBColor(45,55,68)
@@ -78,15 +83,15 @@ for name,size,color in [('Title',25,'153B5B'),('Heading 1',17,'153B5B'),('Headin
     st=styles[name]; st.font.name='Aptos Display'; st.font.size=Pt(size); st.font.bold=True; st.font.color.rgb=RGBColor.from_string(color)
 
 p=doc.add_paragraph(style='Title'); p.add_run('Исследование и разработка интеллектуальной системы обработки пользовательских обращений с применением ML, NLP и Generative AI')
-p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(10); r=p.add_run('Учебное пособие и журнал экспериментов'); r.bold=True; r.font.size=Pt(13); r.font.color.rgb=RGBColor.from_string('167D8D')
+p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(10); r=p.add_run('Техническая документация и журнал экспериментов'); r.bold=True; r.font.size=Pt(13); r.font.color.rgb=RGBColor.from_string('167D8D')
 doc.add_paragraph('Проект развивается по этапам: сначала проверяем данные и формулируем задачу, затем обучаем и сравниваем модели, после этого проектируем поиск, генерацию и API. Документ объясняет решения и пополняется реальными результатами по мере работы.')
-p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(14); p.add_run('Проверен учебный контур: классификатор, поиск по демонстрационным статьям, цитируемые ответы и Docker. Реальная предметная приёмка и оценка LLM остаются открытыми.').bold=True
+p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(14); p.add_run('Проверен программный контур: классификатор, поиск по демонстрационным статьям, цитируемые ответы и Docker. Реальная предметная приёмка и оценка LLM остаются открытыми.').bold=True
 doc.add_paragraph('Дата обновления: 17 ноября 2026')
 doc.add_page_break()
 
 doc.add_heading('Оглавление', level=1); p=doc.add_paragraph(); field(p,'TOC \\o "1-2" \\h \\z \\u')
 doc.add_paragraph('В Word выберите оглавление и обновите поле, если номера страниц не обновились автоматически.')
-doc.add_heading('Как читать это пособие', level=1)
+doc.add_heading('Как читать этот документ', level=1)
 doc.add_paragraph('Актуальное состояние на 17 ноября 2026 изложено в заключительных главах об агенте, открытом банковском корпусе, калибровке и эксплуатации. Ранние главы и журнал сохраняют историю решений; сообщения об отсутствии сквозного запуска относятся к соответствующему моменту разработки. Демонстрационные данные не заменяют экспертную предметную оценку.')
 doc.add_paragraph('Каждый этап объясняет задачу и варианты решения, фиксирует выбранный подход и его причины, затем показывает реализацию, фактические результаты и следующие эксперименты. Для intent classification приведены validation и однократные финальные метрики official test. Для retrieval и агента получены демонстрационные результаты, а для публичного банковского корпуса выполнена исследовательская проверка поиска. Независимой экспертной банковской оценки пока нет.')
 
@@ -246,7 +251,7 @@ for title,subs in sections:
             ('POST /v1/classify','Вернуть intent для одного текста','422 для некорректного тела; 503 без модели; 500 при ошибке предсказания'),
             ('GET /health/knowledge/ready','Проверить состояние поискового индекса','503, если корпус отсутствует или не загружается'),
             ('POST /v1/knowledge/search','Вернуть top-k статей и фрагментов с источниками','422 для некорректного тела; 503 без индекса; 500 при ошибке поиска')])
-        doc.add_paragraph('Пример тела запроса: {"text":"I lost my card"}. Ответ содержит текстовую метку intent, случайный request_id для связи с журналами и версию модели. Swagger/OpenAPI доступен через /docs. Сейчас это локальный учебный API: аутентификация, rate limiting, TLS termination, метрики сервера и мониторинг качества не добавлены; перед внешним размещением эти компоненты нужно спроектировать отдельно.')
+        doc.add_paragraph('Пример тела запроса: {"text":"I lost my card"}. Ответ содержит текстовую метку intent, случайный request_id для связи с журналами и версию модели. Swagger/OpenAPI доступен через /docs. Сейчас это локальный API: аутентификация, rate limiting, TLS termination, метрики сервера и мониторинг качества не добавлены; перед внешним размещением эти компоненты нужно спроектировать отдельно.')
         doc.add_heading('Endpoint поиска по базе знаний',level=2)
         doc.add_paragraph('POST /v1/knowledge/search принимает text, top_k (от 1 до 10) и необязательный language. Ответ возвращает заголовок и текст каждого найденного фрагмента, document_id/chunk_id, source, updated_at, language, score, score_type, retrieval_status и порог, если он задан для языка. Такой контракт позволяет проверить результат и перейти к первоисточнику. Endpoint не пишет текст вопроса в application logs, не формирует ответ клиенту и не интерпретирует сырой score как confidence.')
         add_code_block(doc,'''{
@@ -399,7 +404,7 @@ add_table(doc,['Порядок','Работа','Результат','Артеф�
     ('27','Аудит утечки retrieval-выборок','До оценки считаются дубли, нормализованные совпадения запросов и пересечение query_group_id; при утечке ноутбук останавливает сравнение','audit_query_splits, data/knowledge/README.md, notebooks/02_retrieval_exploration.ipynb'),
     ('28','Операционные метрики retrieval','На calibration измеряются build time, P50/P95 latency и размер sparse-матрицы TF-IDF/BM25; результаты сохраняются рядом с run manifest','notebooks/02_retrieval_exploration.ipynb, notebooks/05_retrieval_run_review.ipynb, reports/README.md'),
     ('29','HTTP latency поиска','Добавлен последовательный round-trip замер API на calibration с P50/P95 и статусами; запросы не записываются в локальный CSV открытым текстом','notebooks/03_api_search.ipynb, reports/README.md'),
-    ('30','Карта завершённости и следующий gate','Разделены готовность кода, измеренные результаты и обязательные входные данные; описан путь к реальной сквозной проверке поиска','README.md, docs/study_guide.docx, reports/research.md')])
+    ('30','Карта завершённости и следующий gate','Разделены готовность кода, измеренные результаты и обязательные входные данные; описан путь к реальной сквозной проверке поиска','README.md, docs/development_guide.docx, reports/research.md')])
 
 append_delivery_guide(doc, ROOT, add_table, add_code_block)
 append_hybrid_guide(doc, ROOT, add_table, add_code_block)
@@ -422,7 +427,7 @@ for source in [
 'FastAPI response model: https://fastapi.tiangolo.com/tutorial/response-model/',
 'FastAPI lifespan: https://fastapi.tiangolo.com/advanced/events/']:
     doc.add_paragraph(source,style='List Bullet')
-footer=sec.footer.paragraphs[0]; footer.alignment=WD_ALIGN_PARAGRAPH.RIGHT; footer.add_run('Учебный ML/NLP проект  •  '); field(footer,'PAGE')
+footer=sec.footer.paragraphs[0]; footer.alignment=WD_ALIGN_PARAGRAPH.RIGHT; footer.add_run('Support Intelligence  •  '); field(footer,'PAGE')
 OUT.parent.mkdir(parents=True,exist_ok=True); TEMP_OUT.parent.mkdir(parents=True,exist_ok=True); doc.save(TEMP_OUT)
 shutil.copy2(TEMP_OUT, OUT)
 print(OUT)
