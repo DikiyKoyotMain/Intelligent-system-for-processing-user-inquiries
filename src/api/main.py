@@ -9,7 +9,7 @@ import re
 import time
 from collections import Counter
 from secrets import compare_digest
-from threading import Lock
+from threading import BoundedSemaphore, Lock
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
@@ -23,6 +23,9 @@ from starlette.responses import JSONResponse
 
 from src.rag.retriever import BM25Retriever, KnowledgeRetriever
 from src.rag.answers import GenerationUnavailable, supported_answer
+from src.agent.service import AgentResult, run_agent
+
+agent_slots = BoundedSemaphore(2)
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = ROOT / 'configs' / 'final_model.json'
@@ -99,6 +102,11 @@ class KnowledgeSearchResponse(BaseModel):
 
 class AnswerRequest(KnowledgeSearchRequest):
     mode: Literal['extractive', 'ollama'] = 'extractive'
+
+
+class AgentRequest(ClassificationRequest):
+    language: Literal['en', 'ru'] = 'en'
+    max_steps: int = Field(default=4, ge=1, le=6, strict=True)
 
 
 class AnswerCitation(BaseModel):
@@ -443,3 +451,25 @@ def answer_knowledge(payload: AnswerRequest, request: Request) -> AnswerResponse
     except GenerationUnavailable as exc:
         raise HTTPException(status_code=503, detail='Answer provider unavailable or evidence validation failed.') from exc
     return AnswerResponse(request_id=search.request_id, **result)
+
+
+@app.post('/v1/agent/run', response_model=AgentResult, tags=['agent'])
+def agent_run(payload: AgentRequest, request: Request) -> AgentResult:
+    def classify_tool(text):
+        result = classify(ClassificationRequest(text=text), request)
+        return {'intent': result.intent, 'scope': 'English BANKING77 only'}
+
+    def search_tool(text, language):
+        return search_knowledge(KnowledgeSearchRequest(text=text, language=language, top_k=3), request).model_dump()
+
+    def prepare_tool(text, evidence):
+        hits = [KnowledgeSearchHit(**row) for row in evidence['hits']]
+        return supported_answer(text, hits, evidence['retrieval_status'], 'extractive')
+
+    if not agent_slots.acquire(blocking=False):
+        raise HTTPException(status_code=429, detail='Agent concurrency limit reached.')
+    try:
+        return run_agent(payload.text, payload.language, str(uuid4()), classify_tool, search_tool, prepare_tool,
+                         max_steps=payload.max_steps)
+    finally:
+        agent_slots.release()

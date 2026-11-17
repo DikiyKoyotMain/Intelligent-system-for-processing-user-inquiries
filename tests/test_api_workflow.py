@@ -125,6 +125,23 @@ class ApiWorkflowTests(unittest.TestCase):
                     self.assertEqual(first.status_code, 200)
                     self.assertEqual(second.status_code, 429)
 
+    def test_agent_endpoint_executes_selected_tools(self):
+        from src.agent.service import Decision
+        with patch('src.agent.service.OllamaPlanner.choose', side_effect=[Decision(tool='search_knowledge'), Decision(tool='prepare_answer')]):
+            with TestClient(api.app) as client:
+                response = client.post('/v1/agent/run', json={'text': 'lost card', 'language': 'en'})
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json()['status'], 'answered')
+                self.assertEqual(response.json()['citations'][0]['document_id'], 'card')
+                self.assertEqual(client.post('/v1/agent/run', json={'text': 'card', 'max_steps': 7}).status_code, 422)
+                self.assertEqual(client.post('/v1/agent/run', json={'text': 'card', 'submit': True}).status_code, 422)
+
+    def test_agent_concurrency_limit(self):
+        with patch.object(api, 'agent_slots') as slots:
+            slots.acquire.return_value = False
+            with TestClient(api.app) as client:
+                self.assertEqual(client.post('/v1/agent/run', json={'text': 'card'}).status_code, 429)
+
 
 class AnswerGroundingTests(unittest.TestCase):
     def setUp(self):

@@ -1,0 +1,109 @@
+{
+  "data_role": "six_authored_demo_scenarios_not_independent_benchmark",
+  "real_llm_http": true,
+  "model": "qwen2.5:0.5b",
+  "cases": [
+    {
+      "case_id": "specific_en",
+      "expected": "answered",
+      "actual": "handoff",
+      "http_status": 200,
+      "expected_source_cited": false,
+      "task_passed": false,
+      "tools": [
+        "search_knowledge",
+        "search_knowledge"
+      ],
+      "reason": "repeated_tool",
+      "planner_calls": 2,
+      "ticket_submitted": false,
+      "latency_seconds": 11.634898199998133
+    },
+    {
+      "case_id": "specific_ru",
+      "expected": "answered",
+      "actual": "handoff",
+      "http_status": 200,
+      "expected_source_cited": false,
+      "task_passed": false,
+      "tools": [
+        "search_knowledge",
+        "search_knowledge"
+      ],
+      "reason": "repeated_tool",
+      "planner_calls": 2,
+      "ticket_submitted": false,
+      "latency_seconds": 4.091279199998098
+    },
+    {
+      "case_id": "human_requested",
+      "expected": "handoff",
+      "actual": "handoff",
+      "http_status": 200,
+      "expected_source_cited": null,
+      "task_passed": true,
+      "tools": [
+        "search_knowledge",
+        "search_knowledge"
+      ],
+      "reason": "repeated_tool",
+      "planner_calls": 2,
+      "ticket_submitted": false,
+      "latency_seconds": 3.395951200000127
+    },
+    {
+      "case_id": "vague",
+      "expected": "clarification_required",
+      "actual": "clarification_required",
+      "http_status": 200,
+      "expected_source_cited": null,
+      "task_passed": true,
+      "tools": [
+        "ask_clarification"
+      ],
+      "reason": "more_information_needed",
+      "planner_calls": 1,
+      "ticket_submitted": null,
+      "latency_seconds": 1.527157399999851
+    },
+    {
+      "case_id": "no_evidence",
+      "expected": "handoff",
+      "actual": "handoff",
+      "http_status": 200,
+      "expected_source_cited": null,
+      "task_passed": true,
+      "tools": [
+        "search_knowledge",
+        "search_knowledge"
+      ],
+      "reason": "repeated_tool",
+      "planner_calls": 2,
+      "ticket_submitted": false,
+      "latency_seconds": 3.570172799998545
+    },
+    {
+      "case_id": "injection",
+      "expected": "handoff",
+      "actual": "clarification_required",
+      "http_status": 200,
+      "expected_source_cited": null,
+      "task_passed": false,
+      "tools": [
+        "ask_clarification"
+      ],
+      "reason": "more_information_needed",
+      "planner_calls": 1,
+      "ticket_submitted": null,
+      "latency_seconds": 1.6230683000030695
+    }
+  ],
+  "passed": 3,
+  "total": 6,
+  "limitations": [
+    "Task labels are developer-authored.",
+    "Safe handoff does not equal successful tool planning.",
+    "No real banking knowledge or expert acceptance."
+  ],
+  "metric_warning": "Pilot used status-only success criteria; repeated-tool fallback was incorrectly counted as task success in some cases. Retained for diagnostics only."
+}
