@@ -1,0 +1,249 @@
+{
+  "data_role": "demonstration_only",
+  "expert_review": false,
+  "real_llm_evaluated": true,
+  "checks": {
+    "created_at": "2026-11-17T05:48:26.943916+00:00",
+    "tests_run": 35,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": true,
+    "notebook_cells_parsed": 41,
+    "source_sha256": {
+      "src\\api\\main.py": "72be3cb79a512c357a07286a33bde89845b8be78706f5c65230abc52ab6f6de1",
+      "src\\api\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "src\\data\\eda.py": "76528d4adcf16f6b86212fb9d932c9c5cf097f4590871798c6c5e75701369e74",
+      "src\\data\\prepare_splits.py": "361fecc090be8e573d32947fc0215dd65979f5830534431f12ac942a1f971bfb",
+      "src\\models\\baseline.py": "424758c061151b833046092497c4e5fdd9f9517e130945048a9c7bf0ffab8d07",
+      "src\\rag\\answers.py": "f378708a328a8137a2d68cfe238c369559be6e5851bf53b17e6b09534300f4a9",
+      "src\\rag\\audit.py": "1a5c5108e429adeaae98d7f5e698aca9a08ace0f95131f9e1c9b5d708820636f",
+      "src\\rag\\evaluation.py": "f2360c59ca757b1f29b22ea33612a7e691020abfc9e9fe2d487aa8e73575a29c",
+      "src\\rag\\retriever.py": "a7742482e5d0265ab35bf678d2bee385676d3603a52885223f0c371d6cf6d428",
+      "src\\rag\\__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "tests\\test_api_workflow.py": "47fdd465548e3b763997455795452a50148da53a3738cfd930c3e2e703337783",
+      "tests\\test_retrieval_integration.py": "a60c5e82d514476b9883178ec02c391a5ba207db044bb058c753ce425ab054c8",
+      "tests\\test_retrieval_split_audit.py": "98ffb2b8b84b5fea606b636d61d8ff6b1c4172b28ebd2645ed2420a69c9353a6",
+      "scripts\\check_project.py": "2ae55bf38ac623bba8cc5ae195fa49b658670c5ce75329d885cbbf2d388b77f8",
+      "scripts\\export_word_pdf.py": "fc8290df910a9addb304fb741b0c758625efde2b6b8b86be957c00f3549a0beb",
+      "scripts\\run_retrieval_experiment.py": "763910e940d9f98fa78cbd5e752112b75cd9f4b2581c18e9cf5e2e0314ef5c95",
+      "scripts\\start_demo.py": "9c19357b6ab60207c31dcf57ba94ad5d9601f95841f7ba7bb3933946c281fe75",
+      "scripts\\summarize_delivery.py": "d73badb0d14b6a50f1f914585a03064494f72853f47acab69e6a8d89fa6b7a3c",
+      "scripts\\verify_demo_http.py": "6c9c1fab71f10d5bd5e32a7edcba711a37d4a3d20cfc529b16e36a39e40ec49d"
+    }
+  },
+  "http": {
+    "data_role": "demonstration_only",
+    "retrieval_run": "b22c0a4a51e9ef96adde",
+    "checks": {
+      "liveness": true,
+      "classification": true,
+      "unauthorized": true,
+      "invalid_input": true,
+      "cited_answer": true,
+      "no_evidence_abstention": true,
+      "all_search_requests_200": true,
+      "metrics": true,
+      "knowledge_readiness": true
+    },
+    "all_passed": true,
+    "request_count": 24,
+    "p50_ms": 4.420349999691098,
+    "p95_ms": 14.379304999965825
+  },
+  "docker": {
+    "verified": true,
+    "container_answer_status": "supported_excerpt",
+    "classification_intent": "lost_or_stolen_card",
+    "health": "healthy",
+    "user": "appuser",
+    "image_id": "sha256:0ca978ad01c751c295d963d4898616e37a03f60c745c1f8b2ab43d8a50bc7866",
+    "read_only_rootfs": true,
+    "base_digest_pinned": true,
+    "dependencies_locked": true,
+    "llm_compose_http_verified": true,
+    "llm_answer_status": "supported_excerpt",
+    "llm_round_trip_seconds": 18.594516800000747
+  },
+  "notebook": {
+    "executed": true,
+    "errors": 0,
+    "source_code_matches": true
+  },
+  "llm": {
+    "real_provider_called": true,
+    "model": "qwen2.5:0.5b",
+    "model_digest": "a8b0c51577010a279d933d14c2a8ab4b268079d44c5c8830c0a93900f1827c67",
+    "model_size_bytes": 397821319,
+    "demonstration_only": true,
+    "cases": [
+      {
+        "language": "en",
+        "expected_document_id": "start_en",
+        "status": "supported_excerpt",
+        "citation_count": 1,
+        "expected_document_cited": true,
+        "exact_quote_validation_passed": true,
+        "latency_seconds": 17.243756199999552
+      },
+      {
+        "language": "en",
+        "expected_document_id": "tests_en",
+        "status": "supported_excerpt",
+        "citation_count": 1,
+        "expected_document_cited": true,
+        "exact_quote_validation_passed": true,
+        "latency_seconds": 6.781700300000011
+      },
+      {
+        "language": "ru",
+        "expected_document_id": "install_ru",
+        "status": "supported_excerpt",
+        "citation_count": 1,
+        "expected_document_cited": true,
+        "exact_quote_validation_passed": true,
+        "latency_seconds": 7.320840599999428
+      },
+      {
+        "language": "ru",
+        "expected_document_id": "tests_ru",
+        "status": "supported_excerpt",
+        "citation_count": 1,
+        "expected_document_cited": true,
+        "exact_quote_validation_passed": true,
+        "latency_seconds": 9.39040600000044
+      }
+    ],
+    "case_count": 4,
+    "supported_expected_count": 4,
+    "limitations": "Four selected calibration smoke cases; not independent answer-quality acceptance. Exact quoting does not prove semantic correctness."
+  },
+  "retrieval": {
+    "run_key": "b22c0a4a51e9ef96adde",
+    "input_sha256": {
+      "articles": "f70b8297784ee55e1867c8942b98e57ca4bb8ebf9bc6a2c84dfc65d6e41d50ff",
+      "calibration": "80985b5e574cf02d80a8fd3643aa20bbea2d58b66f93cc79dd3718f07788646e",
+      "holdout": "cff48b1068cce20ae487d2622757c278bd77f0227ed09ba18191ff1d14ac6e08"
+    },
+    "selected_method": "bm25",
+    "selected_parameters": {
+      "k1": 1.0,
+      "b": 0.3
+    },
+    "candidate_metrics": [
+      {
+        "method": "tfidf",
+        "parameters": {
+          "k1": 1.5,
+          "b": 0.75
+        },
+        "recall_at_5": 1.0,
+        "mrr": 0.9375,
+        "calibration_f1": 0.7619047619047619
+      },
+      {
+        "method": "bm25",
+        "parameters": {
+          "k1": 1.0,
+          "b": 0.3
+        },
+        "recall_at_5": 1.0,
+        "mrr": 0.9375,
+        "calibration_f1": 0.8238095238095238
+      },
+      {
+        "method": "bm25",
+        "parameters": {
+          "k1": 1.0,
+          "b": 0.75
+        },
+        "recall_at_5": 1.0,
+        "mrr": 0.9375,
+        "calibration_f1": 0.8238095238095238
+      },
+      {
+        "method": "bm25",
+        "parameters": {
+          "k1": 1.5,
+          "b": 0.3
+        },
+        "recall_at_5": 1.0,
+        "mrr": 0.9375,
+        "calibration_f1": 0.8238095238095238
+      },
+      {
+        "method": "bm25",
+        "parameters": {
+          "k1": 1.5,
+          "b": 0.75
+        },
+        "recall_at_5": 1.0,
+        "mrr": 0.9375,
+        "calibration_f1": 0.8238095238095238
+      },
+      {
+        "method": "bm25",
+        "parameters": {
+          "k1": 2.0,
+          "b": 0.3
+        },
+        "recall_at_5": 1.0,
+        "mrr": 0.9375,
+        "calibration_f1": 0.8238095238095238
+      },
+      {
+        "method": "bm25",
+        "parameters": {
+          "k1": 2.0,
+          "b": 0.75
+        },
+        "recall_at_5": 1.0,
+        "mrr": 0.9375,
+        "calibration_f1": 0.8238095238095238
+      }
+    ],
+    "holdout_recall_at_5": 1.0,
+    "holdout_mrr": 0.9583333333333334,
+    "holdout_threshold_metrics": [
+      {
+        "language": "en",
+        "threshold": 3.615986559602481,
+        "query_count": 12,
+        "answerable_query_count": 8,
+        "unanswerable_query_count": 4,
+        "accepted_query_count": 8,
+        "coverage": 0.6666666666666666,
+        "supported_answer_precision": 1.0,
+        "supported_answer_recall": 1.0,
+        "supported_answer_f1": 1.0,
+        "unsafe_accept_rate": 0.0,
+        "unanswerable_false_accept_rate": 0.0
+      },
+      {
+        "language": "ru",
+        "threshold": 1.9857986714317293,
+        "query_count": 12,
+        "answerable_query_count": 8,
+        "unanswerable_query_count": 4,
+        "accepted_query_count": 7,
+        "coverage": 0.5833333333333334,
+        "supported_answer_precision": 0.8571428571428571,
+        "supported_answer_recall": 0.75,
+        "supported_answer_f1": 0.7999999999999999,
+        "unsafe_accept_rate": 0.14285714285714285,
+        "unanswerable_false_accept_rate": 0.0
+      }
+    ],
+    "operational": {
+      "index_build_seconds": 0.0027973999999630905,
+      "p50_ms": 0.12689999994108803,
+      "p95_ms": 0.2999500000896661,
+      "measured_requests": 72
+    }
+  },
+  "remaining_acceptance": [
+    "Real approved domain corpus and independently expert-labeled queries.",
+    "Independent expert evaluation of LLM answer relevance and correctness.",
+    "External TLS, centralized rate limiting and monitoring before public deployment."
+  ]
+}

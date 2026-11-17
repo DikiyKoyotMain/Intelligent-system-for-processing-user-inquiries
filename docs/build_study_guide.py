@@ -7,6 +7,7 @@ from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
+from delivery_guide import append_delivery_guide
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'docs' / 'study_guide.docx'
@@ -25,12 +26,26 @@ def set_cell_shading(cell, color):
 
 def add_table(doc, headers, rows):
     table=doc.add_table(rows=1, cols=len(headers)); table.style='Light Shading Accent 1'
+    repeat_header=OxmlElement('w:tblHeader'); table.rows[0]._tr.get_or_add_trPr().append(repeat_header)
     for cell, value in zip(table.rows[0].cells, headers):
         cell.text=value; set_cell_shading(cell, 'DCEEF1')
+        cell.paragraphs[0].paragraph_format.keep_with_next=True
         for run in cell.paragraphs[0].runs: run.bold=True
     for row in rows:
         cells=table.add_row().cells
         for cell, value in zip(cells,row): cell.text=str(value)
+    if headers[0] == 'Порядок':
+        table.autofit=False
+        for row in table.rows:
+            for cell,width in zip(row.cells,[.45,1.35,2.8,2.15]): cell.width=Inches(width)
+    for row in table.rows:
+        row._tr.get_or_add_trPr().append(OxmlElement('w:cantSplit'))
+        if headers[0] == 'Порядок':
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    paragraph.paragraph_format.space_after=Pt(0)
+                    paragraph.paragraph_format.line_spacing=1
+                    for run in paragraph.runs: run.font.size=Pt(8.5)
     doc.add_paragraph()
     return table
 
@@ -60,16 +75,17 @@ for name,size,color in [('Title',25,'153B5B'),('Heading 1',17,'153B5B'),('Headin
 p=doc.add_paragraph(style='Title'); p.add_run('Исследование и разработка интеллектуальной системы обработки пользовательских обращений с применением ML, NLP и Generative AI')
 p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(10); r=p.add_run('Учебное пособие и журнал экспериментов'); r.bold=True; r.font.size=Pt(13); r.font.color.rgb=RGBColor.from_string('167D8D')
 doc.add_paragraph('Проект развивается по этапам: сначала проверяем данные и формулируем задачу, затем обучаем и сравниваем модели, после этого проектируем поиск, генерацию и API. Документ объясняет решения и пополняется реальными результатами по мере работы.')
-p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(14); p.add_run('Классификатор обучен и получил финальные test-метрики; для retrieval готовы код, API и протокол эксперимента, но сквозная оценка ждёт одобренный корпус и экспертную разметку.').bold=True
+p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(14); p.add_run('Проверен учебный контур: классификатор, поиск по демонстрационным статьям, цитируемые ответы и Docker. Реальная предметная приёмка и оценка LLM остаются открытыми.').bold=True
 doc.add_paragraph('Дата обновления: 17 ноября 2026')
 doc.add_page_break()
 
 doc.add_heading('Оглавление', level=1); p=doc.add_paragraph(); field(p,'TOC \\o "1-2" \\h \\z \\u')
 doc.add_paragraph('В Word выберите оглавление и обновите поле, если номера страниц не обновились автоматически.')
 doc.add_heading('Как читать это пособие', level=1)
+doc.add_paragraph('Актуальное состояние на 17 ноября 2026 подробно изложено в главе «Реализация плана до десятого этапа». Предыдущие главы и журнал сохраняют историю решений; фразы об отсутствии сквозного запуска относятся к состоянию до этой главы. Демонстрационные данные не заменяют экспертную предметную оценку.')
 doc.add_paragraph('Каждый этап объясняет задачу и варианты решения, фиксирует выбранный подход и его причины, затем показывает реализацию, фактические результаты и следующие эксперименты. Для intent classification приведены validation и однократные финальные метрики official test. Для retrieval метрик пока нет: одобренный корпус и размеченные запросы ещё не добавлены.')
 
-doc.add_heading('Карта этапов и текущий статус',level=1)
+doc.add_heading('Историческая карта этапов до сквозной проверки',level=1)
 doc.add_paragraph('Журнал содержит 29 завершённых кодовых и документальных этапов. «Завершён» здесь означает, что реализация и инструкция внесены в репозиторий; это не означает, что все ветви были запущены на пользовательской машине или подтверждены реальными статьями. Для retrieval выполнены статические проверки синтаксиса и структуры, но end-to-end измерений пока нет.')
 add_table(doc,['Направление','Статус','Что подтверждает завершение / что осталось'],[
     ('Intent classification','Результаты получены','EDA, split, tuning; Linear SVM word + char_wb: official test Accuracy=0.9010, Macro F1=0.9011. Test не используется для последующей настройки.'),
@@ -379,6 +395,8 @@ add_table(doc,['Порядок','Работа','Результат','Артеф�
     ('28','Операционные метрики retrieval','На calibration измеряются build time, P50/P95 latency и размер sparse-матрицы TF-IDF/BM25; результаты сохраняются рядом с run manifest','notebooks/02_retrieval_exploration.ipynb, notebooks/05_retrieval_run_review.ipynb, reports/README.md'),
     ('29','HTTP latency поиска','Добавлен последовательный round-trip замер API на calibration с P50/P95 и статусами; запросы не записываются в локальный CSV открытым текстом','notebooks/03_api_search.ipynb, reports/README.md'),
     ('30','Карта завершённости и следующий gate','Разделены готовность кода, измеренные результаты и обязательные входные данные; описан путь к реальной сквозной проверке поиска','README.md, docs/study_guide.docx, reports/research.md')])
+
+append_delivery_guide(doc, ROOT, add_table, add_code_block)
 
 doc.add_heading('Источники данных и публикации',level=1)
 for source in [
