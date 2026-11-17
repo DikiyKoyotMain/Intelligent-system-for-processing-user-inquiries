@@ -1,0 +1,534 @@
+{
+  "purpose": "publisher_heading_self_retrieval_sanity_check",
+  "expert_quality_evaluation": false,
+  "independently_authored_customer_queries": false,
+  "holdout_used": false,
+  "articles": 11,
+  "chunks": 24,
+  "queries": 11,
+  "excluded_quarantine": [
+    "cfpb_1023"
+  ],
+  "dense_revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+  "parameters_frozen_from_demo": {
+    "bm25_k1": 1.0,
+    "bm25_b": 0.3,
+    "branch_depth": 4,
+    "rrf_constant": 60
+  },
+  "metrics": {
+    "bm25": {
+      "primary_source_hit_at_1": 0.7272727272727273,
+      "primary_source_hit_at_5": 1.0,
+      "primary_source_mrr_at_5": 0.8484848484848484,
+      "latency_p50_ms": 0.45529999988502823
+    },
+    "dense": {
+      "primary_source_hit_at_1": 0.9090909090909091,
+      "primary_source_hit_at_5": 1.0,
+      "primary_source_mrr_at_5": 0.9545454545454546,
+      "latency_p50_ms": 18.7368000006245
+    },
+    "hybrid_rrf": {
+      "primary_source_hit_at_1": 0.9090909090909091,
+      "primary_source_hit_at_5": 1.0,
+      "primary_source_mrr_at_5": 0.9545454545454546,
+      "latency_p50_ms": 19.15539999754401
+    }
+  },
+  "cases": {
+    "bm25": [
+      {
+        "source_document_id": "cfpb_1017",
+        "query": "How do I get my money back after I discover an unauthorized transaction or money missing from my bank account?",
+        "retrieved_ids": [
+          "cfpb_1017",
+          "cfpb_2023",
+          "cfpb_61",
+          "cfpb_1969",
+          "cfpb_1037"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 0.49820000276668
+      },
+      {
+        "source_document_id": "cfpb_2023",
+        "query": "How do I stop automatic payments from my bank account?",
+        "retrieved_ids": [
+          "cfpb_2023",
+          "cfpb_1017",
+          "cfpb_1969",
+          "cfpb_1037",
+          "cfpb_957"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 0.31880000096862204
+      },
+      {
+        "source_document_id": "cfpb_61",
+        "query": "How do I dispute a charge on my credit card bill?",
+        "retrieved_ids": [
+          "cfpb_1969",
+          "cfpb_61",
+          "cfpb_1017",
+          "cfpb_2023",
+          "cfpb_961"
+        ],
+        "primary_source_hit_at_1": false,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 0.5,
+        "latency_ms": 0.506899999891175
+      },
+      {
+        "source_document_id": "cfpb_1969",
+        "query": "How can I get a refund on a product or service I purchased with my credit card?",
+        "retrieved_ids": [
+          "cfpb_1969",
+          "cfpb_1017",
+          "cfpb_2023",
+          "cfpb_61",
+          "cfpb_981"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 0.4886999995505903
+      },
+      {
+        "source_document_id": "cfpb_957",
+        "query": "Can I close my account whenever I want?",
+        "retrieved_ids": [
+          "cfpb_957",
+          "cfpb_1969",
+          "cfpb_1017",
+          "cfpb_2023",
+          "cfpb_1037"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 0.2539999986765906
+      },
+      {
+        "source_document_id": "cfpb_1037",
+        "query": "What can I do if my bank charged me a fee for overdrawing my account?",
+        "retrieved_ids": [
+          "cfpb_1969",
+          "cfpb_1017",
+          "cfpb_1037",
+          "cfpb_981",
+          "cfpb_957"
+        ],
+        "primary_source_hit_at_1": false,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 0.3333333333333333,
+        "latency_ms": 0.3933000007236842
+      },
+      {
+        "source_document_id": "cfpb_1025",
+        "query": "If I get paid through direct deposit, when can I withdraw the funds?",
+        "retrieved_ids": [
+          "cfpb_1025",
+          "cfpb_61",
+          "cfpb_1969",
+          "cfpb_961",
+          "cfpb_1037"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 0.3857000010611955
+      },
+      {
+        "source_document_id": "cfpb_425",
+        "query": "What should I do if my prepaid card or PIN is lost or stolen or I see unauthorized charges?",
+        "retrieved_ids": [
+          "cfpb_425",
+          "cfpb_1017",
+          "cfpb_1969",
+          "cfpb_29",
+          "cfpb_61"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 0.45529999988502823
+      },
+      {
+        "source_document_id": "cfpb_29",
+        "query": "Am I responsible for unauthorized charges if my credit cards are lost or stolen?",
+        "retrieved_ids": [
+          "cfpb_29",
+          "cfpb_1017",
+          "cfpb_425",
+          "cfpb_1969",
+          "cfpb_61"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 0.7193000019469764
+      },
+      {
+        "source_document_id": "cfpb_981",
+        "query": "How do I avoid ATM fees?",
+        "retrieved_ids": [
+          "cfpb_981",
+          "cfpb_961",
+          "cfpb_1017",
+          "cfpb_1037",
+          "cfpb_1969"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 0.2801999980874825
+      },
+      {
+        "source_document_id": "cfpb_961",
+        "query": "I opened a \"free\" checking account but there are fees charged on my account. Can my bank/credit union do that?",
+        "retrieved_ids": [
+          "cfpb_1017",
+          "cfpb_961",
+          "cfpb_1037",
+          "cfpb_1969",
+          "cfpb_957"
+        ],
+        "primary_source_hit_at_1": false,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 0.5,
+        "latency_ms": 0.7664999975531828
+      }
+    ],
+    "dense": [
+      {
+        "source_document_id": "cfpb_1017",
+        "query": "How do I get my money back after I discover an unauthorized transaction or money missing from my bank account?",
+        "retrieved_ids": [
+          "cfpb_1017",
+          "cfpb_29",
+          "cfpb_2023",
+          "cfpb_425",
+          "cfpb_61"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 22.16740000221762
+      },
+      {
+        "source_document_id": "cfpb_2023",
+        "query": "How do I stop automatic payments from my bank account?",
+        "retrieved_ids": [
+          "cfpb_2023",
+          "cfpb_1017",
+          "cfpb_981",
+          "cfpb_957",
+          "cfpb_1969"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 18.35140000184765
+      },
+      {
+        "source_document_id": "cfpb_61",
+        "query": "How do I dispute a charge on my credit card bill?",
+        "retrieved_ids": [
+          "cfpb_61",
+          "cfpb_1969",
+          "cfpb_29",
+          "cfpb_1017",
+          "cfpb_2023"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 17.322399999102345
+      },
+      {
+        "source_document_id": "cfpb_1969",
+        "query": "How can I get a refund on a product or service I purchased with my credit card?",
+        "retrieved_ids": [
+          "cfpb_1969",
+          "cfpb_61",
+          "cfpb_2023",
+          "cfpb_1017",
+          "cfpb_425"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 18.7368000006245
+      },
+      {
+        "source_document_id": "cfpb_957",
+        "query": "Can I close my account whenever I want?",
+        "retrieved_ids": [
+          "cfpb_957",
+          "cfpb_2023",
+          "cfpb_961",
+          "cfpb_1017",
+          "cfpb_425"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 17.72500000151922
+      },
+      {
+        "source_document_id": "cfpb_1037",
+        "query": "What can I do if my bank charged me a fee for overdrawing my account?",
+        "retrieved_ids": [
+          "cfpb_1037",
+          "cfpb_957",
+          "cfpb_1017",
+          "cfpb_61",
+          "cfpb_981"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 19.21520000178134
+      },
+      {
+        "source_document_id": "cfpb_1025",
+        "query": "If I get paid through direct deposit, when can I withdraw the funds?",
+        "retrieved_ids": [
+          "cfpb_1025",
+          "cfpb_1037",
+          "cfpb_957",
+          "cfpb_1017",
+          "cfpb_61"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 17.25379999697907
+      },
+      {
+        "source_document_id": "cfpb_425",
+        "query": "What should I do if my prepaid card or PIN is lost or stolen or I see unauthorized charges?",
+        "retrieved_ids": [
+          "cfpb_425",
+          "cfpb_29",
+          "cfpb_1017",
+          "cfpb_61",
+          "cfpb_1969"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 21.426200000860263
+      },
+      {
+        "source_document_id": "cfpb_29",
+        "query": "Am I responsible for unauthorized charges if my credit cards are lost or stolen?",
+        "retrieved_ids": [
+          "cfpb_29",
+          "cfpb_425",
+          "cfpb_1017",
+          "cfpb_957",
+          "cfpb_61"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 19.016499998542713
+      },
+      {
+        "source_document_id": "cfpb_981",
+        "query": "How do I avoid ATM fees?",
+        "retrieved_ids": [
+          "cfpb_981",
+          "cfpb_2023",
+          "cfpb_1037",
+          "cfpb_1017",
+          "cfpb_1969"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 16.939400000410387
+      },
+      {
+        "source_document_id": "cfpb_961",
+        "query": "I opened a \"free\" checking account but there are fees charged on my account. Can my bank/credit union do that?",
+        "retrieved_ids": [
+          "cfpb_957",
+          "cfpb_961",
+          "cfpb_981",
+          "cfpb_1037",
+          "cfpb_2023"
+        ],
+        "primary_source_hit_at_1": false,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 0.5,
+        "latency_ms": 23.925299999973504
+      }
+    ],
+    "hybrid_rrf": [
+      {
+        "source_document_id": "cfpb_1017",
+        "query": "How do I get my money back after I discover an unauthorized transaction or money missing from my bank account?",
+        "retrieved_ids": [
+          "cfpb_1017",
+          "cfpb_2023"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 20.8703999996942
+      },
+      {
+        "source_document_id": "cfpb_2023",
+        "query": "How do I stop automatic payments from my bank account?",
+        "retrieved_ids": [
+          "cfpb_2023",
+          "cfpb_1017"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 18.06649999707588
+      },
+      {
+        "source_document_id": "cfpb_61",
+        "query": "How do I dispute a charge on my credit card bill?",
+        "retrieved_ids": [
+          "cfpb_1969",
+          "cfpb_61",
+          "cfpb_1017"
+        ],
+        "primary_source_hit_at_1": false,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 0.5,
+        "latency_ms": 18.25049999752082
+      },
+      {
+        "source_document_id": "cfpb_1969",
+        "query": "How can I get a refund on a product or service I purchased with my credit card?",
+        "retrieved_ids": [
+          "cfpb_1969",
+          "cfpb_1017",
+          "cfpb_61"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 20.654600000852952
+      },
+      {
+        "source_document_id": "cfpb_957",
+        "query": "Can I close my account whenever I want?",
+        "retrieved_ids": [
+          "cfpb_957",
+          "cfpb_1969",
+          "cfpb_2023",
+          "cfpb_1017"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 18.491499999072403
+      },
+      {
+        "source_document_id": "cfpb_1037",
+        "query": "What can I do if my bank charged me a fee for overdrawing my account?",
+        "retrieved_ids": [
+          "cfpb_1037",
+          "cfpb_1969",
+          "cfpb_1017",
+          "cfpb_957"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 19.15539999754401
+      },
+      {
+        "source_document_id": "cfpb_1025",
+        "query": "If I get paid through direct deposit, when can I withdraw the funds?",
+        "retrieved_ids": [
+          "cfpb_1025",
+          "cfpb_1037",
+          "cfpb_61",
+          "cfpb_1969",
+          "cfpb_957"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 20.273899997846456
+      },
+      {
+        "source_document_id": "cfpb_425",
+        "query": "What should I do if my prepaid card or PIN is lost or stolen or I see unauthorized charges?",
+        "retrieved_ids": [
+          "cfpb_425",
+          "cfpb_1017",
+          "cfpb_29",
+          "cfpb_1969"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 22.04640000127256
+      },
+      {
+        "source_document_id": "cfpb_29",
+        "query": "Am I responsible for unauthorized charges if my credit cards are lost or stolen?",
+        "retrieved_ids": [
+          "cfpb_29",
+          "cfpb_425",
+          "cfpb_1017"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 18.58360000187531
+      },
+      {
+        "source_document_id": "cfpb_981",
+        "query": "How do I avoid ATM fees?",
+        "retrieved_ids": [
+          "cfpb_981",
+          "cfpb_2023",
+          "cfpb_961",
+          "cfpb_1017",
+          "cfpb_1037"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 16.107899999042274
+      },
+      {
+        "source_document_id": "cfpb_961",
+        "query": "I opened a \"free\" checking account but there are fees charged on my account. Can my bank/credit union do that?",
+        "retrieved_ids": [
+          "cfpb_961",
+          "cfpb_1037",
+          "cfpb_1017",
+          "cfpb_957",
+          "cfpb_981"
+        ],
+        "primary_source_hit_at_1": true,
+        "primary_source_hit_at_5": true,
+        "primary_source_reciprocal_rank_at_5": 1.0,
+        "latency_ms": 22.16539999790257
+      }
+    ]
+  },
+  "limitations": [
+    "Publisher question is paired with its own source, not independently labeled relevance.",
+    "Other retrieved documents may also be relevant; metrics refer only to source recovery.",
+    "No abstention thresholds selected, no answers generated, no serving approval."
+  ],
+  "corpus_sha256": "e97aa66238aefd52b0fdbd60f8709bcff1e4857476d32f38ebf5e8f60ec4c439",
+  "probe_source_sha256": "3a07d279c1ecc9fd500383bf74d322471fd66edadb0d7b913bb25e98331c8534"
+}

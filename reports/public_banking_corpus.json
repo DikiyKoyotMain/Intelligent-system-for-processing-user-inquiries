@@ -1,0 +1,138 @@
+{
+  "as_of": "2026-11-17",
+  "corpus": "CFPB public banking research snapshot",
+  "jurisdiction": "US",
+  "language": "en",
+  "collection_method": "web_reader_text_snapshot",
+  "snapshot_type": "Reader-extracted text, not original HTTP HTML",
+  "candidates": 12,
+  "research_eligible": 11,
+  "quarantined": [
+    {
+      "document_id": "cfpb_1023",
+      "issue": {
+        "status": "quarantined_pending_expert_review",
+        "finding": "Snapshot still contains $225 and $5,525 amounts despite a 2026 review date; compare the separate official Regulation CC threshold update effective July 2025. Preserve source text; do not silently correct or serve.",
+        "reference": "https://www.consumerfinance.gov/rules-policy/final-rules/availability-funds-and-collection-checks-regulation-cc-threshold-adjustments/",
+        "secondary_reference": "https://www.federalreserve.gov/frrs/regulations/section-22911-adjustment-of-dollar-amounts.htm"
+      },
+      "source": "https://www.consumerfinance.gov/ask-cfpb/how-long-can-a-bank-or-credit-union-hold-funds-i-deposited-en-1023/"
+    }
+  ],
+  "review_due": 9,
+  "articles": [
+    {
+      "document_id": "cfpb_1017",
+      "source": "https://www.consumerfinance.gov/ask-cfpb/how-do-i-get-my-money-back-after-i-discover-an-unauthorized-transaction-or-money-missing-from-my-bank-account-en-1017/",
+      "reviewed_at": "2026-08-28",
+      "snapshot_sha256": "6cb9badbee692a535d6b80fe8e7feeab1971d67ceb294815e7b26fd74fb3a58e",
+      "review_due": false,
+      "age_days": 81,
+      "status": "research_only"
+    },
+    {
+      "document_id": "cfpb_2023",
+      "source": "https://www.consumerfinance.gov/ask-cfpb/how-do-i-stop-automatic-payments-from-my-bank-account-en-2023/",
+      "reviewed_at": "2026-08-28",
+      "snapshot_sha256": "206bb7455dde5134440416198e16bf9df380c6edc73229a56754c87e4cbcf872",
+      "review_due": false,
+      "age_days": 81,
+      "status": "research_only"
+    },
+    {
+      "document_id": "cfpb_61",
+      "source": "https://www.consumerfinance.gov/ask-cfpb/how-do-i-dispute-a-charge-on-my-credit-card-bill-en-61/",
+      "reviewed_at": "2024-04-15",
+      "snapshot_sha256": "0ce30ffecd8ed10975a95e70d1c013c96afcb50fce46f7e2ed3fb7cc2fb9ae4b",
+      "review_due": true,
+      "age_days": 946,
+      "status": "research_only"
+    },
+    {
+      "document_id": "cfpb_1969",
+      "source": "https://www.consumerfinance.gov/ask-cfpb/how-can-i-get-a-refund-on-a-product-or-service-i-purchased-with-my-credit-card-en-1969/",
+      "reviewed_at": "2024-05-15",
+      "snapshot_sha256": "f527b5adc41b2eaa86bd3221007944dc412da7a35e5ff368515545d234c360ec",
+      "review_due": true,
+      "age_days": 916,
+      "status": "research_only"
+    },
+    {
+      "document_id": "cfpb_957",
+      "source": "https://www.consumerfinance.gov/ask-cfpb/can-i-close-my-account-whenever-i-want-en-957/",
+      "reviewed_at": "2024-08-30",
+      "snapshot_sha256": "e55c0cfd029975fc75d5444c9cba88b74dca72a9c067c6ab0362ed901978ce01",
+      "review_due": true,
+      "age_days": 809,
+      "status": "research_only"
+    },
+    {
+      "document_id": "cfpb_1037",
+      "source": "https://www.consumerfinance.gov/ask-cfpb/what-can-i-do-if-my-bank-charged-me-a-fee-for-overdrawing-my-account-en-1037/",
+      "reviewed_at": "2024-12-18",
+      "snapshot_sha256": "dcbce397aa6e6042582b9a0137056943ef664edb761005b6499fa77dfd2e41b0",
+      "review_due": true,
+      "age_days": 699,
+      "status": "research_only"
+    },
+    {
+      "document_id": "cfpb_1025",
+      "source": "https://www.consumerfinance.gov/ask-cfpb/if-i-get-paid-through-direct-deposit-when-can-i-withdraw-the-funds-en-1025/",
+      "reviewed_at": "2024-12-18",
+      "snapshot_sha256": "77c764ae09ee8dfef082e61f16eb86df3e51a87f0ebbd094be0ab941eeb8630c",
+      "review_due": true,
+      "age_days": 699,
+      "status": "research_only"
+    },
+    {
+      "document_id": "cfpb_425",
+      "source": "https://www.consumerfinance.gov/ask-cfpb/what-should-i-do-if-my-prepaid-card-or-pin-is-lost-or-stolen-or-i-see-unauthorized-charges-en-425/",
+      "reviewed_at": "2024-02-06",
+      "snapshot_sha256": "a1143e359f0de052bec271f868bf32144b7034db151494d6704403fec36caaba",
+      "review_due": true,
+      "age_days": 1015,
+      "status": "research_only"
+    },
+    {
+      "document_id": "cfpb_1023",
+      "source": "https://www.consumerfinance.gov/ask-cfpb/how-long-can-a-bank-or-credit-union-hold-funds-i-deposited-en-1023/",
+      "reviewed_at": "2026-08-28",
+      "snapshot_sha256": "1923b96a999cea2fa852fd1df1f8d2ee2d4bae2dd07aa28f5b62c2b7feafc951",
+      "review_due": false,
+      "age_days": 81,
+      "status": "quarantined"
+    },
+    {
+      "document_id": "cfpb_29",
+      "source": "https://www.consumerfinance.gov/ask-cfpb/am-i-responsible-for-unauthorized-charges-if-my-credit-cards-are-lost-or-stolen-en-29/",
+      "reviewed_at": "2024-04-15",
+      "snapshot_sha256": "dd2c0def1b370f34529b954b0dbe552935c155909a3fbc508dbf43ee34b04522",
+      "review_due": true,
+      "age_days": 946,
+      "status": "research_only"
+    },
+    {
+      "document_id": "cfpb_981",
+      "source": "https://www.consumerfinance.gov/ask-cfpb/how-do-i-avoid-atm-fees-en-981/",
+      "reviewed_at": "2020-08-27",
+      "snapshot_sha256": "61d74786261619b40cb8c7c9cdc1ccf7eb3ea16bc8ead899ac112d5668828e37",
+      "review_due": true,
+      "age_days": 2273,
+      "status": "research_only"
+    },
+    {
+      "document_id": "cfpb_961",
+      "source": "https://www.consumerfinance.gov/ask-cfpb/i-opened-a-free-checking-account-but-there-are-fees-charged-on-my-account-can-my-bankcredit-union-do-that-en-961/",
+      "reviewed_at": "2024-08-30",
+      "snapshot_sha256": "152debd25f8a5b8329eb52e624bb4c1889190e0af45828e2a27b7ab0c97a0ffc",
+      "review_due": true,
+      "age_days": 809,
+      "status": "research_only"
+    }
+  ],
+  "business_approval": false,
+  "expert_labels_available": false,
+  "license_policy_url": "https://www.consumerfinance.gov/privacy/website-privacy-policy/",
+  "license_policy_sha256": "8efeb7b59f18cbb7eeb463baad993f65e13608e34087c0f613a8c8dc4fda9286",
+  "research_corpus_sha256": "e97aa66238aefd52b0fdbd60f8709bcff1e4857476d32f38ebf5e8f60ec4c439"
+}

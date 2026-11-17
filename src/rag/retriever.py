@@ -59,7 +59,9 @@ def split_into_chunks(text: str, max_chars: int = 900, overlap_chars: int = 120)
     return chunks
 
 
-def load_documents(path: Path) -> list[dict]:
+def load_documents(path: Path, *, purpose: str = 'serving') -> list[dict]:
+    if purpose not in {'serving', 'research'}:
+        raise ValueError('purpose должен быть serving или research.')
     if not path.is_file():
         raise FileNotFoundError(f'Файл базы знаний не найден: {path}')
     documents = []
@@ -84,7 +86,12 @@ def load_documents(path: Path) -> list[dict]:
                 date.fromisoformat(item['updated_at'])
             except ValueError as exc:
                 raise ValueError(f'В строке {line_number} указана некорректная дата updated_at.') from exc
-            if item['status'].casefold() != 'approved':
+            status = item['status'].casefold()
+            research_allowed = (purpose == 'research' and status == 'research_only'
+                                and item.get('approval_scope') == 'research_only'
+                                and bool(item.get('jurisdiction')))
+            approved_allowed = status == 'approved' and (purpose == 'research' or item.get('approval_scope') != 'research_only')
+            if not approved_allowed and not research_allowed:
                 raise ValueError(f'В строке {line_number} индексируются только документы со status="approved".')
             if item['id'] in seen_ids:
                 raise ValueError(f"Повторяется id документа {item['id']!r}.")

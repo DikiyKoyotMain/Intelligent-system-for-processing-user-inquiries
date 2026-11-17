@@ -1,0 +1,2 @@
+data/public_banking/** text eol=lf
+scripts/probe_public_banking.py text eol=lf
