@@ -13,7 +13,7 @@ def verify():
         notebook = nbformat.read(ROOT / 'notebooks' / name, as_version=4)
         NotebookClient(notebook, timeout=120, kernel_name='python3', resources={'metadata': {'path': str(ROOT)}}).execute()
         nbformat.write(notebook, output / name)
-        print(f'Выполнен {name}')
+        print(f'Notebook passed: {name}')
 
 
 if __name__ == '__main__':
