@@ -6,9 +6,10 @@ import re
 import unicodedata
 from collections import defaultdict
 from pathlib import Path
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
-from src.rag.retriever import BM25Retriever, KnowledgeRetriever
+if TYPE_CHECKING:
+    from src.rag.retriever import BM25Retriever, KnowledgeRetriever
 
 
 def load_queries(path: str | Path) -> list[dict]:
@@ -88,6 +89,7 @@ def audit_query_splits(calibration_examples: Iterable[dict], holdout_examples: I
             'normalized_duplicate_values': duplicate_values,
             'normalized_duplicate_rows': duplicate_rows,
             'query_group_count': len(group_map),
+            'label_conflict_queries': sum(len(labels) > 1 for labels in labels_by_query.values()),
         }
         normalized_queries[split_name] = query_map
         query_groups[split_name] = group_map
@@ -109,6 +111,15 @@ def audit_query_splits(calibration_examples: Iterable[dict], holdout_examples: I
         },
         'policy': 'Точные совпадения проверяются после нормализации; перефразировки проверяются через общий вручную заданный query_group_id.',
     }
+
+
+def require_independent_query_splits(calibration_examples: Iterable[dict], holdout_examples: Iterable[dict]) -> dict:
+    audit = audit_query_splits(calibration_examples, holdout_examples)
+    cross_split = audit['cross_split']
+    duplicates = sum(summary['normalized_duplicate_rows'] for summary in audit['splits'].values())
+    if duplicates or cross_split['normalized_overlap_unique'] or cross_split['query_group_overlap_unique']:
+        raise ValueError('Найдены дубли запросов или пересечение групп calibration/holdout. Исправьте разбиение до оценки.')
+    return audit
 
 
 def evaluate_retrieval(
