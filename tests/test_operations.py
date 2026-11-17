@@ -1,12 +1,20 @@
 import json
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 from urllib.error import HTTPError, URLError
 
 from scripts.load_http import local_https_context, percentile, run_profile
+from scripts.verify_local_deployment import verify
 
 
 class OperationsTests(unittest.TestCase):
+    def test_monitoring_preflight_rejects_low_disk_before_docker(self):
+        with patch('scripts.verify_local_deployment.shutil.disk_usage', return_value=SimpleNamespace(free=0)), patch('scripts.verify_local_deployment.subprocess.run') as docker:
+            with self.assertRaisesRegex(RuntimeError, '4 GiB'):
+                verify('unused', monitoring=True)
+            docker.assert_not_called()
+
     def test_load_tool_rejects_remote_and_unverified_origins(self):
         for origin in ['http://localhost:8000', 'https://example.com', 'https://key@localhost', 'https://localhost/a', 'https://localhost?token=secret']:
             with self.assertRaises(ValueError):

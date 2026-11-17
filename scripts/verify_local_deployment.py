@@ -3,6 +3,7 @@ import base64
 import json
 import os
 import secrets
+import shutil
 import socket
 import ssl
 import subprocess
@@ -19,6 +20,8 @@ from scripts.load_http import local_https_context, open_local, run_profile
 
 
 def verify(image, monitoring=False):
+    if monitoring and shutil.disk_usage(ROOT).free < 4*1024**3:
+        raise RuntimeError('Free at least 4 GiB before downloading and testing monitoring containers.')
     project = 'support-check-'+secrets.token_hex(4)
     directory = ROOT / 'work/local_deployment' / project
     directory.mkdir(parents=True)
