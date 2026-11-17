@@ -12,6 +12,7 @@ from hybrid_guide import append_hybrid_guide
 from agent_guide import append_agent_guide
 from public_banking_guide import append_public_banking_guide
 from calibration_guide import append_calibration_guide
+from operations_guide import append_operations_guide
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'docs' / 'study_guide.docx'
@@ -86,8 +87,8 @@ doc.add_page_break()
 doc.add_heading('Оглавление', level=1); p=doc.add_paragraph(); field(p,'TOC \\o "1-2" \\h \\z \\u')
 doc.add_paragraph('В Word выберите оглавление и обновите поле, если номера страниц не обновились автоматически.')
 doc.add_heading('Как читать это пособие', level=1)
-doc.add_paragraph('Актуальное состояние на 17 ноября 2026 подробно изложено в главе «Реализация плана до десятого этапа». Предыдущие главы и журнал сохраняют историю решений; фразы об отсутствии сквозного запуска относятся к состоянию до этой главы. Демонстрационные данные не заменяют экспертную предметную оценку.')
-doc.add_paragraph('Каждый этап объясняет задачу и варианты решения, фиксирует выбранный подход и его причины, затем показывает реализацию, фактические результаты и следующие эксперименты. Для intent classification приведены validation и однократные финальные метрики official test. Для retrieval метрик пока нет: одобренный корпус и размеченные запросы ещё не добавлены.')
+doc.add_paragraph('Актуальное состояние на 17 ноября 2026 изложено в заключительных главах об агенте, открытом банковском корпусе, калибровке и эксплуатации. Ранние главы и журнал сохраняют историю решений; сообщения об отсутствии сквозного запуска относятся к соответствующему моменту разработки. Демонстрационные данные не заменяют экспертную предметную оценку.')
+doc.add_paragraph('Каждый этап объясняет задачу и варианты решения, фиксирует выбранный подход и его причины, затем показывает реализацию, фактические результаты и следующие эксперименты. Для intent classification приведены validation и однократные финальные метрики official test. Для retrieval и агента получены демонстрационные результаты, а для публичного банковского корпуса выполнена исследовательская проверка поиска. Независимой экспертной банковской оценки пока нет.')
 
 doc.add_heading('Историческая карта этапов до сквозной проверки',level=1)
 doc.add_paragraph('Журнал содержит 29 завершённых кодовых и документальных этапов. «Завершён» здесь означает, что реализация и инструкция внесены в репозиторий; это не означает, что все ветви были запущены на пользовательской машине или подтверждены реальными статьями. Для retrieval выполнены статические проверки синтаксиса и структуры, но end-to-end измерений пока нет.')
@@ -405,6 +406,7 @@ append_hybrid_guide(doc, ROOT, add_table, add_code_block)
 append_agent_guide(doc, ROOT, add_table, add_code_block)
 append_public_banking_guide(doc, ROOT, add_table, add_code_block)
 append_calibration_guide(doc, ROOT, add_table, add_code_block)
+append_operations_guide(doc, ROOT, add_table, add_code_block)
 
 doc.add_heading('Источники данных и публикации',level=1).paragraph_format.page_break_before=True
 for source in [

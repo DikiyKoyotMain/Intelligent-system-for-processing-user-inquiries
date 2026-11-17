@@ -1,0 +1,317 @@
+{
+  "created_at": "2026-11-17T13:49:06.827533+00:00",
+  "data_role": "demonstration_only",
+  "automated_tests": 81,
+  "notebooks_executed": [
+    "09_public_banking_review.ipynb",
+    "10_banking_calibration.ipynb",
+    "11_local_operations.ipynb"
+  ],
+  "ci": {
+    "run_id": 44095990997,
+    "url": "https://github.com/DikiyKoyotMain/Intelligent-system-for-processing-user-inquiries/actions/runs/44095990997",
+    "head_sha": "3494411a573b59c0ddb1ffcad4c167119203cd83",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "Локальный HTTPS и параллельные запросы",
+        "conclusion": "success"
+      },
+      {
+        "name": "Тесты и ноутбуки на windows-latest",
+        "conclusion": "success"
+      },
+      {
+        "name": "Тесты и ноутбуки на ubuntu-latest",
+        "conclusion": "success"
+      }
+    ],
+    "artifact_id": 14333901839
+  },
+  "deployment": {
+    "data_role": "demonstration_only",
+    "checks": {
+      "https_verified_with_project_ca": true,
+      "untrusted_ca_is_rejected": true,
+      "unauthorized": true,
+      "private_docs_hidden": true,
+      "metrics_require_key": true,
+      "cited_demo_answer": true,
+      "demo_abstention": true,
+      "api_port_not_published": true,
+      "api_read_only_non_root": true,
+      "parallel_search_no_http_errors": true,
+      "rate_limit_under_parallel_load": true,
+      "prometheus_records_rejections": true,
+      "prometheus_histogram_available": true,
+      "monitoring_target_up": true,
+      "grafana_dashboard_provisioned": true,
+      "alert_rules_loaded": true
+    },
+    "passed": true,
+    "search_profiles": [
+      {
+        "data_role": "demonstration_only",
+        "endpoint": "/v1/knowledge/search",
+        "concurrency": 1,
+        "request_count": 120,
+        "elapsed_seconds": 5.568944579000004,
+        "completed_requests_per_second": 21.548068632700954,
+        "status_counts": {
+          "200": 120
+        },
+        "p50_ms": 46.266464999995094,
+        "p95_ms": 47.60573805001229,
+        "p99_ms": 49.089646150002864,
+        "max_ms": 52.68387999998936,
+        "success_rate": 1.0,
+        "configured_duration_seconds": null,
+        "workload": "Closed-loop, one request per worker; new HTTPS connection per request; no warmup exclusion.",
+        "quality_evaluation": false,
+        "agent_or_llm_load_test": false
+      },
+      {
+        "data_role": "demonstration_only",
+        "endpoint": "/v1/knowledge/search",
+        "concurrency": 4,
+        "request_count": 120,
+        "elapsed_seconds": 1.3977167870000073,
+        "completed_requests_per_second": 85.85430261416712,
+        "status_counts": {
+          "200": 120
+        },
+        "p50_ms": 45.88930100000255,
+        "p95_ms": 49.23820239999728,
+        "p99_ms": 55.0894778799966,
+        "max_ms": 55.60057499999971,
+        "success_rate": 1.0,
+        "configured_duration_seconds": null,
+        "workload": "Closed-loop, one request per worker; new HTTPS connection per request; no warmup exclusion.",
+        "quality_evaluation": false,
+        "agent_or_llm_load_test": false
+      },
+      {
+        "data_role": "demonstration_only",
+        "endpoint": "/v1/knowledge/search",
+        "concurrency": 12,
+        "request_count": 120,
+        "elapsed_seconds": 0.5280847610000023,
+        "completed_requests_per_second": 227.23624853851723,
+        "status_counts": {
+          "200": 120
+        },
+        "p50_ms": 47.51975799999997,
+        "p95_ms": 60.7465473000012,
+        "p99_ms": 63.85322656999108,
+        "max_ms": 69.91766599999494,
+        "success_rate": 1.0,
+        "configured_duration_seconds": null,
+        "workload": "Closed-loop, one request per worker; new HTTPS connection per request; no warmup exclusion.",
+        "quality_evaluation": false,
+        "agent_or_llm_load_test": false
+      },
+      {
+        "data_role": "demonstration_only",
+        "endpoint": "/v1/knowledge/search",
+        "concurrency": 8,
+        "request_count": 1711,
+        "elapsed_seconds": 10.042313109999995,
+        "completed_requests_per_second": 170.37907315359547,
+        "status_counts": {
+          "200": 1711
+        },
+        "p50_ms": 46.01283600000272,
+        "p95_ms": 51.10572499999222,
+        "p99_ms": 56.715499700010255,
+        "max_ms": 66.06047500000045,
+        "success_rate": 1.0,
+        "configured_duration_seconds": 10,
+        "workload": "Closed-loop, one request per worker; new HTTPS connection per request; no warmup exclusion.",
+        "quality_evaluation": false,
+        "agent_or_llm_load_test": false
+      }
+    ],
+    "rate_limit_profile": {
+      "data_role": "demonstration_only",
+      "endpoint": "/v1/knowledge/search",
+      "concurrency": 12,
+      "request_count": 60,
+      "elapsed_seconds": 0.27393763300000273,
+      "completed_requests_per_second": 219.02795662981947,
+      "status_counts": {
+        "200": 20,
+        "429": 40
+      },
+      "p50_ms": 46.738111499990964,
+      "p95_ms": 69.49461480000352,
+      "p99_ms": 71.05217060999266,
+      "max_ms": 71.19944699999792,
+      "success_rate": 0.3333333333333333,
+      "configured_duration_seconds": null,
+      "workload": "Closed-loop, one request per worker; new HTTPS connection per request; no warmup exclusion.",
+      "quality_evaluation": false,
+      "agent_or_llm_load_test": false
+    },
+    "image_id": "sha256:f409fe6d216ce71bf619bf02334fe9a0e4658b95fec524504c1e2dad4935bad9",
+    "caddy_digest": "sha256:4851e54a46b206517c574821bb5cc67f170d2156041e9fbc4c9193b45e84a75b",
+    "scope": "Local HTTPS gateway and lexical demo API. No banking acceptance, no classifier artifact, no LLM/agent load test.",
+    "tls_trust": "Project CA passed explicitly to each test client. System trust store unchanged.",
+    "monitoring_requested": true,
+    "sla_defined": false
+  },
+  "local_deployment": {
+    "data_role": "demonstration_only",
+    "checks": {
+      "https_verified_with_project_ca": true,
+      "untrusted_ca_is_rejected": true,
+      "unauthorized": true,
+      "private_docs_hidden": true,
+      "metrics_require_key": true,
+      "cited_demo_answer": true,
+      "demo_abstention": true,
+      "api_port_not_published": true,
+      "api_read_only_non_root": true,
+      "parallel_search_no_http_errors": true,
+      "rate_limit_under_parallel_load": true,
+      "prometheus_records_rejections": true,
+      "prometheus_histogram_available": true
+    },
+    "passed": true,
+    "search_profiles": [
+      {
+        "data_role": "demonstration_only",
+        "endpoint": "/v1/knowledge/search",
+        "concurrency": 1,
+        "request_count": 120,
+        "elapsed_seconds": 0.7520548000029521,
+        "completed_requests_per_second": 159.5628403668575,
+        "status_counts": {
+          "200": 120
+        },
+        "p50_ms": 5.3815499995835125,
+        "p95_ms": 8.183340002142357,
+        "p99_ms": 26.57870399794775,
+        "max_ms": 29.99709999858169,
+        "success_rate": 1.0,
+        "configured_duration_seconds": null,
+        "workload": "Closed-loop, one request per worker; new HTTPS connection per request; no warmup exclusion.",
+        "quality_evaluation": false,
+        "agent_or_llm_load_test": false
+      },
+      {
+        "data_role": "demonstration_only",
+        "endpoint": "/v1/knowledge/search",
+        "concurrency": 4,
+        "request_count": 120,
+        "elapsed_seconds": 0.3416415000028792,
+        "completed_requests_per_second": 351.2453844131603,
+        "status_counts": {
+          "200": 120
+        },
+        "p50_ms": 11.106049998488743,
+        "p95_ms": 13.13901500107022,
+        "p99_ms": 13.981277000711998,
+        "max_ms": 14.251399996282998,
+        "success_rate": 1.0,
+        "configured_duration_seconds": null,
+        "workload": "Closed-loop, one request per worker; new HTTPS connection per request; no warmup exclusion.",
+        "quality_evaluation": false,
+        "agent_or_llm_load_test": false
+      },
+      {
+        "data_role": "demonstration_only",
+        "endpoint": "/v1/knowledge/search",
+        "concurrency": 12,
+        "request_count": 120,
+        "elapsed_seconds": 0.24467949999962002,
+        "completed_requests_per_second": 490.4374906773406,
+        "status_counts": {
+          "200": 120
+        },
+        "p50_ms": 24.15445000224281,
+        "p95_ms": 31.39709500137542,
+        "p99_ms": 34.225782002322376,
+        "max_ms": 35.30779999709921,
+        "success_rate": 1.0,
+        "configured_duration_seconds": null,
+        "workload": "Closed-loop, one request per worker; new HTTPS connection per request; no warmup exclusion.",
+        "quality_evaluation": false,
+        "agent_or_llm_load_test": false
+      },
+      {
+        "data_role": "demonstration_only",
+        "endpoint": "/v1/knowledge/search",
+        "concurrency": 8,
+        "request_count": 4752,
+        "elapsed_seconds": 10.011755799998355,
+        "completed_requests_per_second": 474.64202033381406,
+        "status_counts": {
+          "200": 4752
+        },
+        "p50_ms": 16.804300001240335,
+        "p95_ms": 20.95469499872706,
+        "p99_ms": 29.572170995961613,
+        "max_ms": 74.76360000146087,
+        "success_rate": 1.0,
+        "configured_duration_seconds": 10,
+        "workload": "Closed-loop, one request per worker; new HTTPS connection per request; no warmup exclusion.",
+        "quality_evaluation": false,
+        "agent_or_llm_load_test": false
+      }
+    ],
+    "rate_limit_profile": {
+      "data_role": "demonstration_only",
+      "endpoint": "/v1/knowledge/search",
+      "concurrency": 12,
+      "request_count": 60,
+      "elapsed_seconds": 0.11005850000219652,
+      "completed_requests_per_second": 545.1646169882611,
+      "status_counts": {
+        "200": 20,
+        "429": 40
+      },
+      "p50_ms": 18.543900001532165,
+      "p95_ms": 31.08604000262858,
+      "p99_ms": 31.80681400168396,
+      "max_ms": 31.85720000328729,
+      "success_rate": 0.3333333333333333,
+      "configured_duration_seconds": null,
+      "workload": "Closed-loop, one request per worker; new HTTPS connection per request; no warmup exclusion.",
+      "quality_evaluation": false,
+      "agent_or_llm_load_test": false
+    },
+    "image_id": "sha256:038b8981db38cc1ecedb7fc9e11db9610ea5c5ef57764f14601f2331cee3afba",
+    "caddy_digest": "sha256:4851e54a46b206517c574821bb5cc67f170d2156041e9fbc4c9193b45e84a75b",
+    "scope": "Local HTTPS gateway and lexical demo API. No banking acceptance, no classifier artifact, no LLM/agent load test.",
+    "tls_trust": "Project CA passed explicitly to each test client. System trust store unchanged.",
+    "monitoring_requested": false,
+    "sla_defined": false
+  },
+  "local_environment": {
+    "initial_issue": "Disk C almost full, Docker I/O error; first partial run stopped, not counted as passed.",
+    "docker_recovered": true,
+    "own_test_containers_cleaned": true,
+    "free_bytes_after_recovery": 1265541120,
+    "cleanup": "Temporary Word QA images, removed reranker cache, unused work/python-deps copy and newly downloaded unused Prometheus image. Source files, documents and trained models retained.",
+    "full_monitoring_requires_free_gib": 4,
+    "full_monitoring_test_location": "GitHub Actions Linux runner"
+  },
+  "source_sha256": {
+    "src/api/main.py": "cc8ffe426633fa6988b7a58c37f3aba295d31aa2af4d4f946a1a3cb6026f4d1a",
+    "scripts/load_http.py": "982b8bcdaefef9916a7b72a2aafb341f1b4b75ecd5332144349f6bd83b37b1e5",
+    "scripts/verify_local_deployment.py": "8c207fe3f7d4c5bf7caafef45e5d8623c204ba40a49841d8a43247639dcb8755",
+    "scripts/manage_local_stack.py": "f3043b6ad40d40b3ed49051be0a2117a53afd2c04b5c33e07738c419bbb9ecfe",
+    ".github/workflows/checks.yaml": "7533e8501f065dc057a145d490d810a72491967597fcd5b6c0aa8cbaa80f9133"
+  },
+  "pending": [
+    "Actual domain expert source and query review",
+    "New independently authored banking holdout and calibration",
+    "Banking agent task and answer acceptance",
+    "Long duration and LLM/agent load profiles",
+    "External server and domain by user choice",
+    "Alert delivery and backup restore drills"
+  ],
+  "public_server_deployed": false,
+  "banking_serving_approved": false,
+  "sla_defined": false
+}
