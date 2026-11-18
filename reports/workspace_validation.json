@@ -112,5 +112,25 @@
   "screenshots": [
     "reports/figures/workspace_result.jpg"
   ],
-  "banking_serving_approved": false
+  "banking_serving_approved": false,
+  "ci": {
+    "run_id": 44247199484,
+    "url": "https://github.com/DikiyKoyotMain/Intelligent-system-for-processing-user-inquiries/actions/runs/44247199484",
+    "head_sha": "edfb77099c3d8a4273dda6520b043c8ac8c61e4e",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "Локальный HTTPS и параллельные запросы",
+        "conclusion": "success"
+      },
+      {
+        "name": "Тесты и ноутбуки на ubuntu-latest",
+        "conclusion": "success"
+      },
+      {
+        "name": "Тесты и ноутбуки на windows-latest",
+        "conclusion": "success"
+      }
+    ]
+  }
 }

@@ -13,6 +13,7 @@ from agent_guide import append_agent_guide
 from public_banking_guide import append_public_banking_guide
 from calibration_guide import append_calibration_guide
 from operations_guide import append_operations_guide
+from workspace_guide import append_workspace_guide
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'docs' / 'development_guide.docx'
@@ -86,13 +87,13 @@ p=doc.add_paragraph(style='Title'); p.add_run('Исследование и ра�
 p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(10); r=p.add_run('Техническая документация и журнал экспериментов'); r.bold=True; r.font.size=Pt(13); r.font.color.rgb=RGBColor.from_string('167D8D')
 doc.add_paragraph('Проект развивается по этапам: сначала проверяем данные и формулируем задачу, затем обучаем и сравниваем модели, после этого проектируем поиск, генерацию и API. Документ объясняет решения и пополняется реальными результатами по мере работы.')
 p=doc.add_paragraph(); p.paragraph_format.space_before=Pt(14); p.add_run('Проверен программный контур: классификатор, поиск по демонстрационным статьям, цитируемые ответы и Docker. Реальная предметная приёмка и оценка LLM остаются открытыми.').bold=True
-doc.add_paragraph('Дата обновления: 17 ноября 2026')
+doc.add_paragraph('Дата обновления: 18 ноября 2026')
 doc.add_page_break()
 
 doc.add_heading('Оглавление', level=1); p=doc.add_paragraph(); field(p,'TOC \\o "1-2" \\h \\z \\u')
 doc.add_paragraph('В Word выберите оглавление и обновите поле, если номера страниц не обновились автоматически.')
 doc.add_heading('Как читать этот документ', level=1)
-doc.add_paragraph('Актуальное состояние на 17 ноября 2026 изложено в заключительных главах об агенте, открытом банковском корпусе, калибровке и эксплуатации. Ранние главы и журнал сохраняют историю решений; сообщения об отсутствии сквозного запуска относятся к соответствующему моменту разработки. Демонстрационные данные не заменяют экспертную предметную оценку.')
+doc.add_paragraph('Актуальное состояние на 18 ноября 2026 изложено в заключительных главах об агенте, открытом банковском корпусе, калибровке, эксплуатации и браузерном интерфейсе. Ранние главы и журнал сохраняют историю решений; сообщения об отсутствии сквозного запуска относятся к соответствующему моменту разработки. Демонстрационные данные не заменяют экспертную предметную оценку.')
 doc.add_paragraph('Каждый этап объясняет задачу и варианты решения, фиксирует выбранный подход и его причины, затем показывает реализацию, фактические результаты и следующие эксперименты. Для intent classification приведены validation и однократные финальные метрики official test. Для retrieval и агента получены демонстрационные результаты, а для публичного банковского корпуса выполнена исследовательская проверка поиска. Независимой экспертной банковской оценки пока нет.')
 
 doc.add_heading('Историческая карта этапов до сквозной проверки',level=1)
@@ -412,6 +413,7 @@ append_agent_guide(doc, ROOT, add_table, add_code_block)
 append_public_banking_guide(doc, ROOT, add_table, add_code_block)
 append_calibration_guide(doc, ROOT, add_table, add_code_block)
 append_operations_guide(doc, ROOT, add_table, add_code_block)
+append_workspace_guide(doc, ROOT, add_table, add_code_block, add_figure)
 
 doc.add_heading('Источники данных и публикации',level=1).paragraph_format.page_break_before=True
 for source in [
