@@ -1,0 +1,116 @@
+{
+  "created_at": "2026-11-18T05:51:14.714273+00:00",
+  "automated_tests": 91,
+  "tests_passed": true,
+  "chunking": {
+    "strategy": "sentences_pysbd034_v1",
+    "max_chars": 900,
+    "overlap_sentences": 1
+  },
+  "segmenter_version": "0.3.4",
+  "http": {
+    "passed": true,
+    "checks": {
+      "frontend_root": true,
+      "frontend_script": true,
+      "frontend_css": true,
+      "status_requires_key": true,
+      "sentence_index": true,
+      "threshold_calibrated": true,
+      "corpus_visible": true,
+      "indexed_chunks_visible": true,
+      "preview_sentences": true,
+      "preview_validation": true,
+      "answer_with_citations": true,
+      "agent_clarification": true,
+      "planner_unavailable_is_explicit": true
+    },
+    "article_count": 16,
+    "chunk_count": 16,
+    "chunking": {
+      "strategy": "sentences_pysbd034_v1",
+      "max_chars": 900,
+      "overlap_sentences": 1
+    },
+    "scope": "Demonstration corpus and HTTP contract; no real LLM or independent banking quality evaluation."
+  },
+  "browser_checks": {
+    "extractive_answer_with_citations": true,
+    "search_results": true,
+    "classification_lost_card": true,
+    "corpus_catalog": true,
+    "indexed_chunks": true,
+    "sentence_preview": true,
+    "literal_markup_rendered_as_text": true,
+    "real_agent_answer": true,
+    "real_ollama_answer": true,
+    "mobile_no_horizontal_overflow": true,
+    "console_errors_observed": 0
+  },
+  "agent_example": {
+    "request_id": "ecff9ee2-5806-436d-8cb9-765c0487ab86",
+    "status": "answered",
+    "answer": "Р’ РєРѕСЂРЅРµ РїСЂРѕРµРєС‚Р° РІС‹РїРѕР»РЅРёС‚Рµ python -m pip install -r requirements.txt. Р’ PyCharm Рё СЏРґСЂРµ РЅРѕСѓС‚Р±СѓРєР° РІС‹Р±РµСЂРёС‚Рµ РѕРґРёРЅ РёРЅС‚РµСЂРїСЂРµС‚Р°С‚РѕСЂ Python.",
+    "citations": [
+      {
+        "document_id": "install_ru",
+        "chunk_id": "install_ru:0001",
+        "source": "repo://data/demo/articles.jsonl#install_ru",
+        "quote": "Р’ РєРѕСЂРЅРµ РїСЂРѕРµРєС‚Р° РІС‹РїРѕР»РЅРёС‚Рµ python -m pip install -r requirements.txt. Р’ PyCharm Рё СЏРґСЂРµ РЅРѕСѓС‚Р±СѓРєР° РІС‹Р±РµСЂРёС‚Рµ РѕРґРёРЅ РёРЅС‚РµСЂРїСЂРµС‚Р°С‚РѕСЂ Python."
+      }
+    ],
+    "clarification": null,
+    "ticket_draft": null,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_knowledge",
+        "status": "completed",
+        "duration_ms": 5065.417100000559
+      },
+      {
+        "step": 2,
+        "tool": "prepare_answer",
+        "status": "answered",
+        "duration_ms": 4295.888999999988
+      }
+    ],
+    "reason": "supported_excerpts",
+    "planner_calls": 2,
+    "policy_version": "operator-assistant-v1",
+    "planner_model": "qwen2.5:1.5b"
+  },
+  "ollama_example": {
+    "request_id": "d9fdc86a-b9d8-453a-86d7-a38546c31233",
+    "status": "supported_excerpt",
+    "mode": "ollama",
+    "answer": "Р’ РєРѕСЂРЅРµ РїСЂРѕРµРєС‚Р° РІС‹РїРѕР»РЅРёС‚Рµ python -m pip install -r requirements.txt. Р’ PyCharm Рё СЏРґСЂРµ РЅРѕСѓС‚Р±СѓРєР° РІС‹Р±РµСЂРёС‚Рµ РѕРґРёРЅ РёРЅС‚РµСЂРїСЂРµС‚Р°С‚РѕСЂ Python.",
+    "citations": [
+      {
+        "document_id": "install_ru",
+        "chunk_id": "install_ru:0001",
+        "source": "repo://data/demo/articles.jsonl#install_ru",
+        "quote": "Р’ РєРѕСЂРЅРµ РїСЂРѕРµРєС‚Р° РІС‹РїРѕР»РЅРёС‚Рµ python -m pip install -r requirements.txt. Р’ PyCharm Рё СЏРґСЂРµ РЅРѕСѓС‚Р±СѓРєР° РІС‹Р±РµСЂРёС‚Рµ РѕРґРёРЅ РёРЅС‚РµСЂРїСЂРµС‚Р°С‚РѕСЂ Python."
+      }
+    ],
+    "reason": "Exact excerpts; relevance still requires human review."
+  },
+  "browser_checks_scope": "Manual browser checks on localhost. Single real LLM examples, not a benchmark.",
+  "sentence_quality_evaluation": "Boundary and integration tests only. No independently labeled banking retrieval comparison.",
+  "existing_banking_probe": "Historical character chunking report retained and labeled; not recomputed on holdout.",
+  "source_sha256": {
+    "src/rag/chunking.py": "48f16f9917724c94d00cb805193685d550e49b7165b244fa052c11ecd3df9c21",
+    "src/rag/retriever.py": "d98973b584e0a691ff9d502108ce491817af94f5e797e287db578bf06fa3cdc0",
+    "src/api/main.py": "0698ccb74ada516ed0cf81033e9bec204993d3ddfef8c85e64a4cfed2bf2c3f5",
+    "src/api/workspace.py": "d0c56f07fc29f710db812d2f4bc57a3beb0e30a75eb075ae8b3c3e6e6e5bc9d6",
+    "frontend/index.html": "9ef8c879c91ea8737f9422ef0880b32c19354e6912c1045a9a586e2de5c7aa2a",
+    "frontend/styles.css": "c6f6ea7c598028d5483d77e15f2d7634f506b2583f162f13b06e5247aadfeaf1",
+    "frontend/app.js": "f13cfe231fd75e27376eeb04231b86ec0b8742e727f83c945c51a9c3a4ddd801"
+  },
+  "source_corpus": "16 AI-authored project operations articles, demonstration only",
+  "api_address": "http://127.0.0.1:8000/",
+  "screenshots": [
+    "reports/figures/workspace_result.jpg"
+  ],
+  "banking_serving_approved": false
+}

@@ -12,7 +12,7 @@ services:
     environment:
       OLLAMA_NO_CLOUD: "1"
     volumes:
-      - ./work/ollama:/root/.ollama
+      - ./work/ollama/models:/root/.ollama/models
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 10s

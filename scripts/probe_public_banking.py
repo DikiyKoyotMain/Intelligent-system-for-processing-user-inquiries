@@ -14,6 +14,7 @@ from sentence_transformers import SentenceTransformer
 
 from src.rag.hybrid import DenseRetriever, HybridRetriever
 from src.data.public_banking import digest
+from src.rag.chunking import DEFAULT_CHUNKING
 from src.rag.retriever import BM25Retriever, load_documents, make_chunks
 
 
@@ -51,6 +52,7 @@ def run():
     result = dict(purpose='publisher_heading_self_retrieval_sanity_check', expert_quality_evaluation=False,
                   corpus_sha256=digest(directory / 'research_articles.jsonl'), probe_source_sha256=digest(__file__),
                   independently_authored_customer_queries=False, holdout_used=False, articles=len(articles), chunks=len(chunks),
+                  chunking=DEFAULT_CHUNKING.copy(),
                   queries=len(articles), excluded_quarantine=['cfpb_1023'], dense_revision=revision,
                   parameters_frozen_from_demo=dict(bm25_k1=1.0, bm25_b=0.3, branch_depth=4, rrf_constant=60),
                   metrics=metrics, cases=cases,

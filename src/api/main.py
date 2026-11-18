@@ -24,6 +24,8 @@ from starlette.responses import JSONResponse, PlainTextResponse
 from src.rag.retriever import BM25Retriever, KnowledgeRetriever
 from src.rag.answers import GenerationUnavailable, supported_answer
 from src.agent.service import AgentResult, run_agent
+from src.rag.chunking import normalize_chunking
+from src.api.workspace import router as workspace_router, mount_frontend
 
 agent_slots = BoundedSemaphore(2)
 
@@ -170,15 +172,7 @@ def read_retrieval_config() -> tuple[dict, dict[str, float], dict | None]:
     algorithm = config.get('method')
     if algorithm not in {'tfidf', 'bm25'}:
         raise ValueError('method в configs/retrieval.json должен быть tfidf или bm25.')
-    chunking = config.get('chunking', {})
-    if not isinstance(chunking, dict):
-        raise ValueError('chunking должен быть JSON-объектом.')
-    max_chars = chunking.get('max_chars')
-    overlap_chars = chunking.get('overlap_chars')
-    if isinstance(max_chars, bool) or isinstance(overlap_chars, bool) or not isinstance(max_chars, int) or not isinstance(overlap_chars, int):
-        raise ValueError('chunking требует целочисленные max_chars и overlap_chars.')
-    if max_chars < 1 or overlap_chars < 0 or overlap_chars >= max_chars:
-        raise ValueError('Некорректные параметры chunking.')
+    config['chunking'] = normalize_chunking(config.get('chunking', {}))
     bm25 = config.get('bm25', {})
     if not isinstance(bm25, dict):
         raise ValueError('bm25 должен быть JSON-объектом.')
@@ -223,6 +217,7 @@ def read_retrieval_config() -> tuple[dict, dict[str, float], dict | None]:
             raise ValueError('calibration_manifest.method должен быть tfidf или bm25.')
         if not isinstance(manifest.get('chunking'), dict) or not isinstance(manifest.get('bm25'), dict):
             raise ValueError('calibration_manifest должен фиксировать chunking и параметры BM25.')
+        manifest['chunking'] = normalize_chunking(manifest['chunking'])
     elif manifest is not None and not isinstance(manifest, dict):
         raise ValueError('calibration_manifest должен быть JSON-объектом или null.')
     return config, thresholds, manifest
@@ -250,15 +245,13 @@ def load_knowledge_retriever() -> tuple[KnowledgeRetriever | BM25Retriever | Non
         if algorithm == 'tfidf':
             retriever = KnowledgeRetriever.from_jsonl(
                 corpus_path,
-                max_chars=chunking['max_chars'],
-                overlap_chars=chunking['overlap_chars'],
+                **chunking,
             )
             retriever_name = 'tfidf_word_bigram'
         elif algorithm == 'bm25':
             retriever = BM25Retriever.from_jsonl(
                 corpus_path,
-                max_chars=chunking['max_chars'],
-                overlap_chars=chunking['overlap_chars'],
+                **chunking,
                 k1=bm25['k1'],
                 b=bm25['b'],
             )
@@ -284,7 +277,7 @@ def load_knowledge_retriever() -> tuple[KnowledgeRetriever | BM25Retriever | Non
         }
         manifest_fingerprint = {
             'method': manifest.get('method'),
-            'chunking': manifest.get('chunking'),
+            'chunking': normalize_chunking(manifest.get('chunking')),
             'bm25': manifest.get('bm25'),
         }
         if corpus_sha256 != manifest['corpus_sha256'] or manifest_fingerprint != expected_fingerprint:
@@ -303,6 +296,10 @@ async def lifespan(app: FastAPI):
         app.state.knowledge_thresholds,
         app.state.knowledge_threshold_status,
     ) = load_knowledge_retriever()
+    try:
+        app.state.knowledge_chunking = read_retrieval_config()[0]['chunking']
+    except (OSError, ValueError):
+        app.state.knowledge_chunking = None
     yield
     app.state.model = None
     app.state.knowledge_retriever = None
@@ -317,6 +314,8 @@ app = FastAPI(
     lifespan=lifespan,
     dependencies=[Security(APIKeyHeader(name='x-api-key', auto_error=False))],
 )
+app.include_router(workspace_router)
+mount_frontend(app)
 
 metrics_lock = Lock()
 request_counts = Counter()

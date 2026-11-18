@@ -39,7 +39,7 @@ def run(data_dir, output_dir):
     names = dict(dense='intfloat/multilingual-e5-small')
     revisions = {key: HfApi().model_info(name).sha for key, name in names.items()}
     hashes = {name: hashlib.sha256((data_dir / f'{name}.jsonl').read_bytes()).hexdigest() for name in ['articles', 'calibration']}
-    sources = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in ['src/rag/hybrid.py', 'scripts/compare_hybrid.py']}
+    sources = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in ['src/rag/hybrid.py', 'src/rag/retriever.py', 'src/rag/chunking.py', 'scripts/compare_hybrid.py']}
     key = hashlib.sha256(json.dumps([revisions, hashes, sources], sort_keys=True).encode()).hexdigest()[:20]
     folder = output_dir / key
     folder.mkdir(exist_ok=True)

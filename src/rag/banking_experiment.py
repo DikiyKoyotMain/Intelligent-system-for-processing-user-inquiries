@@ -7,6 +7,7 @@ from pathlib import Path
 from src.data.public_banking import digest, validate_reviewed_queries
 from src.rag.evaluation import evaluate_retrieval, require_independent_query_splits, sweep_abstention_thresholds
 from src.rag.retriever import BM25Retriever, load_documents, make_chunks
+from src.rag.chunking import DEFAULT_CHUNKING
 
 ROOT = Path(__file__).resolve().parents[2]
 CORPUS = ROOT / 'data/public_banking/research_articles.jsonl'
@@ -29,13 +30,13 @@ def local_path(path):
 
 
 def code_fingerprints():
-    paths = ['src/rag/banking_experiment.py', 'src/rag/retriever.py', 'src/rag/hybrid.py',
+    paths = ['src/rag/banking_experiment.py', 'src/rag/retriever.py', 'src/rag/chunking.py', 'src/rag/hybrid.py',
              'src/rag/evaluation.py', 'src/data/public_banking.py']
     return {name: digest(ROOT / name) for name in paths}
 
 
 def runtime_fingerprint(method):
-    packages = ['numpy', 'scikit-learn']
+    packages = ['numpy', 'scikit-learn', 'pysbd']
     if method != 'bm25':
         packages += ['torch', 'sentence-transformers', 'transformers']
     return dict(python=platform.python_version(), packages={name: version(name) for name in packages})
@@ -67,7 +68,7 @@ def load_review_bundle(directory):
 def build_retriever(method):
     if method not in {'bm25', 'dense', 'hybrid_rrf'}:
         raise ValueError('Unsupported research retriever.')
-    chunks = make_chunks(load_documents(CORPUS, purpose='research'), max_chars=900, overlap_chars=120)
+    chunks = make_chunks(load_documents(CORPUS, purpose='research'), **DEFAULT_CHUNKING)
     lexical = BM25Retriever(chunks, k1=1.0, b=0.3)
     if method == 'bm25':
         return lexical
@@ -108,7 +109,7 @@ def calibrate(bundle, run_dir, method='bm25', min_precision=0.9, max_negative_fa
                      bundle_manifest_sha256=digest(local_path(bundle) / 'manifest.json'),
                      corpus_sha256=digest(CORPUS), split_sha256=manifest['split_sha256'],
                      code_sha256=code_fingerprints(), runtime=runtime_fingerprint(method),
-                     parameters=dict(chunk_max_chars=900, chunk_overlap_chars=120, bm25_k1=1.0, bm25_b=0.3,
+                     parameters=dict(chunking=DEFAULT_CHUNKING.copy(), bm25_k1=1.0, bm25_b=0.3,
                                      dense_model='intfloat/multilingual-e5-small', dense_revision=REVISION,
                                      max_seq_length=512, rrf_depth=4, rrf_constant=60),
                      constraints=dict(min_precision=min_precision, max_negative_far=max_negative_far),

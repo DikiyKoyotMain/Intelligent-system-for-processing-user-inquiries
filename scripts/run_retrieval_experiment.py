@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT))
 from src.rag.audit import audit_corpus
 from src.rag.evaluation import evaluate_retrieval, load_queries, require_independent_query_splits, sweep_abstention_thresholds
 from src.rag.retriever import BM25Retriever, KnowledgeRetriever
+from src.rag.chunking import DEFAULT_CHUNKING
 
 
 def sha256(path):
@@ -31,7 +32,7 @@ def run(data_dir, output_dir):
     data_dir, output_dir = Path(data_dir), Path(output_dir)
     paths = {name: data_dir / f'{name}.jsonl' for name in ['articles', 'calibration', 'holdout']}
     input_hashes = {name: sha256(path) for name, path in paths.items()}
-    source_hashes = {name: sha256(ROOT / name) for name in ['src/rag/retriever.py', 'src/rag/evaluation.py', 'scripts/run_retrieval_experiment.py']}
+    source_hashes = {name: sha256(ROOT / name) for name in ['src/rag/retriever.py', 'src/rag/chunking.py', 'src/rag/evaluation.py', 'scripts/run_retrieval_experiment.py']}
     run_key = hashlib.sha256(json.dumps([input_hashes, source_hashes], sort_keys=True).encode()).hexdigest()[:20]
     run_dir = output_dir / run_key
     result_path = run_dir / 'results.json'
@@ -43,7 +44,7 @@ def run(data_dir, output_dir):
     calibration = load_queries(paths['calibration'])
     holdout = load_queries(paths['holdout'])
     split_audit = require_independent_query_splits(calibration, holdout)
-    chunking = {'max_chars': 900, 'overlap_chars': 120}
+    chunking = DEFAULT_CHUNKING.copy()
     candidates = []
     started = time.perf_counter()
     tfidf = KnowledgeRetriever.from_jsonl(paths['articles'], **chunking)

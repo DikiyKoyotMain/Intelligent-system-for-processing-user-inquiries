@@ -63,6 +63,33 @@ class ApiWorkflowTests(unittest.TestCase):
             self.assertEqual(client.post('/v1/knowledge/search', json={'text': 'card', 'top_k': 11}).status_code, 422)
             self.assertTrue(client.get('/metrics').json()['requests'])
 
+    def test_workspace_assets_status_and_index_inspection(self):
+        with TestClient(api.app) as client:
+            page = client.get('/')
+            self.assertEqual(page.status_code, 200)
+            self.assertIn('Content-Security-Policy', page.headers)
+            self.assertEqual(client.get('/assets/app.js').status_code, 200)
+            self.assertEqual(client.get('/assets/styles.css').status_code, 200)
+            status = client.get('/v1/system/status').json()
+            self.assertEqual(status['article_count'], 3)
+            self.assertEqual(status['chunking']['strategy'], 'characters_v1')
+            self.assertNotIn('api_key', status)
+            self.assertEqual(len(client.get('/v1/knowledge/documents').json()['documents']), 3)
+            chunks = client.get('/v1/knowledge/chunks', params={'document_id': 'card'}).json()
+            self.assertIn('Freeze', chunks['chunks'][0]['text'])
+            self.assertEqual(client.get('/v1/knowledge/chunks', params={'document_id': 'absent'}).status_code, 404)
+
+    def test_sentence_preview_and_stale_character_threshold(self):
+        with TestClient(api.app) as client:
+            result = client.post('/v1/chunks/preview', json={'text': 'Первое предложение. Второе предложение.', 'language': 'ru'}).json()
+            self.assertEqual(result['sentence_count'], 2)
+            self.assertFalse(result['index_changed'])
+            self.assertEqual(client.post('/v1/chunks/preview', json={'text': '  '}).status_code, 422)
+        self.config['chunking'] = dict(strategy='sentences_pysbd034_v1', max_chars=900, overlap_sentences=1)
+        self.save_config()
+        with TestClient(api.app) as client:
+            self.assertEqual(client.get('/health/knowledge/ready').json()['threshold_status'], 'calibration_mismatch')
+
     def test_corpus_change_disables_threshold_and_answer(self):
         self.corpus.write_text(self.corpus.read_text(encoding='utf-8') + '\n', encoding='utf-8')
         with TestClient(api.app) as client:
@@ -118,6 +145,8 @@ class ApiWorkflowTests(unittest.TestCase):
             with TestClient(api.app) as client:
                 self.assertEqual(client.post('/v1/classify', json={'text': 'card'}).status_code, 401)
                 self.assertEqual(client.get('/metrics').status_code, 401)
+                self.assertEqual(client.get('/v1/system/status').status_code, 401)
+                self.assertEqual(client.post('/v1/chunks/preview', json={'text': 'Text.'}).status_code, 401)
                 with patch.object(api, 'rate_window_count', 0):
                     headers = {'x-api-key': 'test-secret'}
                     first = client.post('/v1/knowledge/search', json={'text': 'card'}, headers=headers)

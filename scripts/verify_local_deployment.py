@@ -94,6 +94,9 @@ def verify(image, monitoring=False):
 
         wait_ready()
         checks['https_verified_with_project_ca'] = request('/health/live')[0] == 200
+        checks['workspace_frontend'] = request('/')[0] == 200 and request('/assets/app.js')[0] == 200
+        preview = request('/v1/chunks/preview', {'text': 'First sentence. Second sentence.', 'language': 'en'})
+        checks['sentence_preview'] = preview[0] == 200 and json.loads(preview[1])['sentence_count'] == 2
         try:
             request('/health/live', tls_context=ssl.create_default_context())
             checks['untrusted_ca_is_rejected'] = False

@@ -6,6 +6,7 @@ RUN pip install --no-cache-dir -r requirements-container.lock && useradd --creat
 COPY --chown=appuser:appuser src /app/src
 COPY --chown=appuser:appuser scripts /app/scripts
 COPY --chown=appuser:appuser configs /app/configs
+COPY --chown=appuser:appuser frontend /app/frontend
 COPY --chown=appuser:appuser data/demo /app/data/demo
 RUN mkdir /app/work && chown appuser:appuser /app/work
 USER appuser

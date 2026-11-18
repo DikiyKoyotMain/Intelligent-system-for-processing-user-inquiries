@@ -11,6 +11,8 @@ from typing import Iterable
 import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
+from src.rag.chunking import split_into_chunks
+
 
 @dataclass(frozen=True)
 class KnowledgeChunk:
@@ -34,29 +36,6 @@ class RetrievalHit:
     language: str
     score: float
     score_type: str
-
-
-def split_into_chunks(text: str, max_chars: int = 900, overlap_chars: int = 120) -> list[str]:
-    if max_chars < 1:
-        raise ValueError('max_chars должен быть положительным.')
-    if overlap_chars < 0 or overlap_chars >= max_chars:
-        raise ValueError('overlap_chars должен быть неотрицательным и меньше max_chars.')
-    normalized = re.sub(r'\s+', ' ', text).strip()
-    chunks = []
-    start = 0
-    while start < len(normalized):
-        end = min(start + max_chars, len(normalized))
-        if end < len(normalized):
-            boundary = normalized.rfind(' ', start, end)
-            if boundary > start + max_chars // 2:
-                end = boundary
-        chunk = normalized[start:end].strip()
-        if chunk:
-            chunks.append(chunk)
-        if end == len(normalized):
-            break
-        start = max(end - overlap_chars, start + 1)
-    return chunks
 
 
 def load_documents(path: Path, *, purpose: str = 'serving') -> list[dict]:
@@ -102,10 +81,12 @@ def load_documents(path: Path, *, purpose: str = 'serving') -> list[dict]:
     return documents
 
 
-def make_chunks(documents: Iterable[dict], max_chars: int = 900, overlap_chars: int = 120) -> list[KnowledgeChunk]:
+def make_chunks(documents: Iterable[dict], max_chars: int = 900, overlap_chars: int | None = None,
+                *, strategy: str | None = None, overlap_sentences: int = 1) -> list[KnowledgeChunk]:
     chunks = []
     for document in documents:
-        texts = split_into_chunks(document['content'], max_chars=max_chars, overlap_chars=overlap_chars)
+        texts = split_into_chunks(document['content'], max_chars=max_chars, overlap_chars=overlap_chars,
+                                  strategy=strategy, overlap_sentences=overlap_sentences, language=document['language'])
         for index, text in enumerate(texts, start=1):
             chunks.append(KnowledgeChunk(
                 document_id=document['id'],
@@ -135,9 +116,11 @@ class KnowledgeRetriever:
         self.matrix = self.vectorizer.fit_transform([chunk.text for chunk in self.chunks])
 
     @classmethod
-    def from_jsonl(cls, path: str | Path, max_chars: int = 900, overlap_chars: int = 120) -> KnowledgeRetriever:
+    def from_jsonl(cls, path: str | Path, max_chars: int = 900, overlap_chars: int | None = None,
+                   *, strategy: str | None = None, overlap_sentences: int = 1) -> KnowledgeRetriever:
         documents = load_documents(Path(path))
-        chunks = make_chunks(documents, max_chars=max_chars, overlap_chars=overlap_chars)
+        chunks = make_chunks(documents, max_chars=max_chars, overlap_chars=overlap_chars,
+                             strategy=strategy, overlap_sentences=overlap_sentences)
         return cls(chunks)
 
     def search(self, query: str, top_k: int = 5, language: str | None = None) -> list[RetrievalHit]:
@@ -194,9 +177,11 @@ class BM25Retriever:
         )
 
     @classmethod
-    def from_jsonl(cls, path: str | Path, max_chars: int = 900, overlap_chars: int = 120, **kwargs) -> BM25Retriever:
+    def from_jsonl(cls, path: str | Path, max_chars: int = 900, overlap_chars: int | None = None,
+                   *, strategy: str | None = None, overlap_sentences: int = 1, **kwargs) -> BM25Retriever:
         documents = load_documents(Path(path))
-        chunks = make_chunks(documents, max_chars=max_chars, overlap_chars=overlap_chars)
+        chunks = make_chunks(documents, max_chars=max_chars, overlap_chars=overlap_chars,
+                             strategy=strategy, overlap_sentences=overlap_sentences)
         return cls(chunks, **kwargs)
 
     def with_parameters(self, k1: float, b: float) -> BM25Retriever:

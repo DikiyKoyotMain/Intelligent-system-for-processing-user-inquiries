@@ -530,5 +530,11 @@
     "No abstention thresholds selected, no answers generated, no serving approval."
   ],
   "corpus_sha256": "e97aa66238aefd52b0fdbd60f8709bcff1e4857476d32f38ebf5e8f60ec4c439",
-  "probe_source_sha256": "3a07d279c1ecc9fd500383bf74d322471fd66edadb0d7b913bb25e98331c8534"
+  "probe_source_sha256": "3a07d279c1ecc9fd500383bf74d322471fd66edadb0d7b913bb25e98331c8534",
+  "chunking": {
+    "strategy": "characters_v1",
+    "max_chars": 900,
+    "overlap_chars": 120
+  },
+  "status": "historical_before_sentence_chunking"
 }
