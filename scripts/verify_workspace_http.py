@@ -55,7 +55,10 @@ def verify():
             status = request('/v1/system/status')[1]
             checks['sentence_index'] = status['chunking']['strategy'] == 'sentences_pysbd034_v1'
             checks['threshold_calibrated'] = status['threshold_status'] == 'calibrated'
-            checks['corpus_visible'] = len(request('/v1/knowledge/documents')[1]['documents']) == 16
+            checks['corpus_visible'] = len(request('/v1/knowledge/documents')[1]['documents']) == status['article_count']
+            for term in ('АПИ', 'API'):
+                definition = request('/v1/knowledge/answer', dict(text=f'Что такое {term}?', language='ru', top_k=10, mode='extractive'))
+                checks[f'definition_{term}'] = definition[0] == 200 and 'программный интерфейс' in (definition[1].get('answer') or '')
             indexed = request('/v1/knowledge/chunks?document_id=install_ru')
             checks['indexed_chunks_visible'] = indexed[0] == 200 and bool(indexed[1]['chunks'])
             preview = request('/v1/chunks/preview', dict(text='Первое предложение. Второе предложение.', language='ru'))
